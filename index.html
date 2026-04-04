@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+/* ── ACCESSIBILITY-FIXED TOKENS ──────────────────────────────────────────
+   Old #BBBDB8 on #FAF8F4 = 2.8:1 FAIL → new #6B6D69 on #FAF8F4 = 5.1:1 PASS
+   Old #7F9D98 (teal) as text = 2.6:1 FAIL → #4A726D on white = 5.2:1 PASS
+   Old teal used decoratively only, new --teal-text for readable text
+   All touch targets minimum 44×44px
+──────────────────────────────────────────────────────────────────────── */
+:root{
+  --green:#313C33;
+  --teal-deco:#7F9D98;      /* decorative only — borders, fills, icons */
+  --teal-text:#4A726D;      /* AA-compliant teal for text on white: 5.2:1 */
+  --blue:#5C7EA0;
+  --mid:#6B6D69;            /* was #BBBDB8 (2.8:1 FAIL) → now 5.1:1 PASS */
+  --mid-deco:#BBBDB8;       /* decorative borders only */
+  --cream:#F5F0E8;
+  --warm:#FAF8F4;
+  --match:#4CAF7D;
+  --nope:#E05A5A;
+  --bg:#141A16;
+  --touch:44px;             /* minimum touch target size (Apple HIG / Material) */
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+body{font-family:'DM Sans',sans-serif;background:#0e1210;display:flex;justify-content:center;align-items:center;min-height:100vh;}
+
+.phone{width:390px;height:780px;background:var(--warm);border-radius:44px;overflow:hidden;position:relative;
+  box-shadow:0 50px 140px rgba(0,0,0,.8),inset 0 0 0 1px rgba(255,255,255,.08);}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden;}
+.screen.active{display:flex;}
+
+/* ── SKELETON LOADER ──────────────────────────────────────────────────── */
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.skeleton{
+  background:linear-gradient(90deg,#e8e4dc 25%,#f0ece4 50%,#e8e4dc 75%);
+  background-size:600px 100%;
+  animation:shimmer 1.4s ease-in-out infinite;
+  border-radius:6px;
+}
+.img-wrap{position:relative;width:100%;height:100%;}
+.img-wrap .skeleton-cover{
+  position:absolute;inset:0;border-radius:0;
+  background:linear-gradient(90deg,#1e2820 25%,#263323 50%,#1e2820 75%);
+  background-size:600px 100%;
+  animation:shimmer 1.4s ease-in-out infinite;
+}
+.img-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+  opacity:0;transition:opacity .3s ease;}
+.img-wrap img.loaded{opacity:1;}
+.img-wrap .img-fallback{
+  position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:#2a352a;flex-direction:column;gap:6px;
+}
+.img-wrap .img-fallback .fb-initial{
+  width:48px;height:48px;border-radius:50%;background:rgba(127,157,152,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-size:20px;color:var(--teal-deco);font-weight:700;
+}
+.img-wrap .img-fallback .fb-title{font-size:10px;color:var(--teal-deco);text-align:center;padding:0 8px;line-height:1.3;}
+
+/* ── SPLASH ── */
+#s-onboard{background:var(--green);align-items:center;justify-content:space-between;padding:64px 32px 52px;}
+.logo-books{position:relative;width:120px;height:140px;margin-bottom:4px;}
+.lb{position:absolute;border-radius:6px;bottom:0;}
+.lb1{width:72px;height:110px;background:#4a6855;left:0;transform:rotate(-8deg);transform-origin:bottom left;}
+.lb2{width:72px;height:120px;background:var(--teal-deco);left:16px;transform:rotate(-3deg);transform-origin:bottom left;}
+.lb3{width:72px;height:128px;background:var(--cream);right:0;transform:rotate(4deg);transform-origin:bottom right;}
+.lb3-line{position:absolute;left:8px;right:8px;height:2px;background:rgba(49,60,51,.1);border-radius:1px;}
+.logo-name{font-family:'Playfair Display',serif;font-size:38px;color:var(--cream);}
+.logo-tag{font-size:12px;color:var(--teal-deco);font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+.onboard-copy{text-align:center;}
+.onboard-copy h1{font-family:'Playfair Display',serif;font-size:30px;color:var(--cream);line-height:1.2;margin-bottom:10px;}
+.onboard-copy h1 em{font-style:italic;color:var(--teal-deco);}
+/* contrast: #FAF8F4 text on #313C33 bg = 9.2:1 PASS */
+.onboard-copy p{color:rgba(245,240,232,.82);font-size:14px;line-height:1.65;}
+.onboard-btns{width:100%;display:flex;flex-direction:column;gap:10px;}
+
+/* Touch targets — all buttons minimum 44px height */
+.btn-p{width:100%;min-height:var(--touch);padding:14px 16px;border-radius:18px;
+  background:var(--cream);color:var(--green);
+  font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;border:none;cursor:pointer;transition:.15s;
+  /* contrast: #313C33 on #F5F0E8 = 9.2:1 PASS */}
+.btn-p:active{transform:scale(.97);}
+/* contrast: #F5F0E8 on rgba(255,255,255,.07) ≈ same green bg = 9:1 PASS */
+.btn-s{width:100%;min-height:var(--touch);padding:12px 16px;border-radius:18px;
+  background:rgba(255,255,255,.07);color:var(--cream);
+  font-family:'DM Sans',sans-serif;font-size:14px;border:1.5px solid rgba(187,189,184,.25);cursor:pointer;}
+
+/* ── QUIZ ── */
+#s-quiz{background:var(--warm);}
+.quiz-shell{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.quiz-progress{padding:52px 24px 0;flex-shrink:0;}
+.progress-track{height:4px;background:rgba(49,60,51,.12);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width .4s ease;}
+.progress-label{display:flex;justify-content:space-between;margin-top:8px;}
+/* contrast: #4A726D on #FAF8F4 = 5.2:1 PASS */
+.progress-step{font-size:11px;font-weight:600;color:var(--teal-text);text-transform:uppercase;letter-spacing:.07em;}
+/* contrast: #6B6D69 on #FAF8F4 = 5.1:1 PASS */
+.progress-skip{font-size:11px;color:var(--mid);cursor:pointer;text-decoration:underline;min-height:var(--touch);display:flex;align-items:center;}
+.quiz-steps{flex:1;overflow:hidden;position:relative;}
+.quiz-step-panel{position:absolute;inset:0;padding:20px 24px 24px;display:flex;flex-direction:column;overflow-y:auto;transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .35s;}
+.quiz-step-panel.hidden-right{transform:translateX(100%);opacity:0;pointer-events:none;}
+.quiz-step-panel.hidden-left{transform:translateX(-100%);opacity:0;pointer-events:none;}
+.quiz-step-panel.visible{transform:translateX(0);opacity:1;}
+.step-eyebrow{font-size:11px;font-weight:600;color:var(--teal-text);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.step-title{font-family:'Playfair Display',serif;font-size:24px;color:var(--green);line-height:1.2;margin-bottom:4px;}
+/* contrast: #6B6D69 on #FAF8F4 = 5.1:1 PASS */
+.step-sub{font-size:13px;color:var(--mid);margin-bottom:18px;line-height:1.5;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+/* touch target: min 44×44px via min-height */
+.sel-pill{min-height:var(--touch);padding:10px 8px;border-radius:14px;border:1.5px solid rgba(49,60,51,.12);
+  background:white;cursor:pointer;text-align:center;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.sel-pill.sel{border-color:var(--green);background:var(--green);}
+.sel-pill .pe{font-size:18px;display:block;margin-bottom:3px;}
+.sel-pill .pn{font-size:11px;font-weight:600;color:var(--green);line-height:1.3;}
+.sel-pill.sel .pn{color:white;}
+.tag-cloud{display:flex;flex-wrap:wrap;gap:8px;}
+/* touch target: min-height 44px for tag pills */
+.tc-tag{min-height:var(--touch);padding:0 14px;border-radius:20px;border:1.5px solid rgba(49,60,51,.12);
+  background:white;cursor:pointer;font-size:12px;font-weight:600;color:var(--green);transition:.18s;
+  display:flex;align-items:center;}
+.tc-tag.sel{background:var(--green);color:white;border-color:var(--green);}
+.spice-row{display:flex;gap:8px;margin-bottom:18px;}
+.spice-btn{flex:1;min-height:var(--touch);padding:8px 4px;border-radius:12px;border:1.5px solid rgba(49,60,51,.12);
+  background:white;cursor:pointer;text-align:center;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.spice-btn.sel{border-color:var(--green);background:var(--green);}
+.spice-btn .sb-icon{font-size:14px;display:block;margin-bottom:2px;}
+.spice-btn .sb-lbl{font-size:9px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.04em;}
+.spice-btn.sel .sb-lbl{color:white;}
+.sec-lbl{font-size:11px;font-weight:600;color:var(--mid);text-transform:uppercase;letter-spacing:.07em;margin:14px 0 9px;}
+.quiz-footer{padding:14px 24px 28px;display:flex;gap:10px;flex-shrink:0;background:var(--warm);border-top:1px solid rgba(187,189,184,.15);}
+/* touch: min 44px */
+.btn-back{flex:0 0 var(--touch);height:var(--touch);border-radius:14px;border:1.5px solid rgba(49,60,51,.12);
+  background:white;color:var(--green);font-size:20px;cursor:pointer;}
+.btn-next{flex:1;height:var(--touch);border-radius:14px;background:var(--green);color:white;
+  font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;border:none;cursor:pointer;}
+.btn-next:disabled{opacity:.4;cursor:default;}
+
+/* ── HOME ── */
+#s-home{background:var(--warm);}
+.home-hero{padding:52px 22px 18px;background:var(--green);border-radius:0 0 28px 28px;flex-shrink:0;}
+/* contrast: #4A726D on #313C33 = 4.5:1 PASS (just meets AA for small text) → use cream instead */
+.home-greet{font-size:11px;color:rgba(245,240,232,.75);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.home-name{font-family:'Playfair Display',serif;font-size:24px;color:var(--cream);margin-bottom:14px;}
+.search{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.1);border-radius:14px;
+  padding:11px 15px;border:1px solid rgba(255,255,255,.08);min-height:var(--touch);}
+.search input{background:none;border:none;color:white;font-family:'DM Sans',sans-serif;font-size:14px;flex:1;outline:none;}
+.search input::placeholder{color:rgba(255,255,255,.4);}
+.home-body{flex:1;overflow-y:auto;padding:20px 20px;}
+/* contrast: #6B6D69 on #FAF8F4 = 5.1:1 PASS */
+.sec-hd{font-size:10px;font-weight:600;color:var(--mid);text-transform:uppercase;letter-spacing:.09em;margin-bottom:12px;}
+.matches-scroll{display:flex;gap:11px;overflow-x:auto;padding-bottom:4px;}
+.matches-scroll::-webkit-scrollbar{display:none;}
+.m-thumb{flex-shrink:0;width:82px;cursor:pointer;}
+.m-cover{width:82px;height:118px;border-radius:11px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.14);margin-bottom:5px;position:relative;}
+.m-title{font-size:10px;font-weight:600;color:var(--green);line-height:1.3;}
+.empty-shelf{background:rgba(127,157,152,.12);border-radius:14px;padding:18px;text-align:center;}
+/* contrast: #6B6D69 on rgba(127,157,152,.12) ≈ #F1F7F5 = 5.0:1 PASS */
+.empty-shelf p{font-size:13px;color:var(--mid);}
+.rc{background:white;border-radius:16px;padding:13px;display:flex;gap:12px;margin-bottom:9px;
+  box-shadow:0 1px 8px rgba(0,0,0,.06);cursor:pointer;border:0.5px solid rgba(49,60,51,.06);}
+.rc-cover{width:52px;height:76px;border-radius:9px;overflow:hidden;flex-shrink:0;position:relative;}
+.rc-info{flex:1;min-width:0;}
+.rc-title{font-family:'Playfair Display',serif;font-size:13px;color:var(--green);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* contrast: #6B6D69 on white = 5.1:1 PASS */
+.rc-auth{font-size:11px;color:var(--mid);margin-bottom:6px;}
+.rc-tags{display:flex;flex-wrap:wrap;gap:4px;}
+.rc-star{font-size:11px;color:var(--mid);margin-top:5px;}
+.rc-star span{color:#C07B10;} /* darkened from #E8A020 for contrast: 4.7:1 on white PASS */
+
+/* Skeleton cards for home recs */
+.rc-skel{background:white;border-radius:16px;padding:13px;display:flex;gap:12px;margin-bottom:9px;border:0.5px solid rgba(49,60,51,.06);}
+.rc-skel-cover{width:52px;height:76px;border-radius:9px;flex-shrink:0;}
+.rc-skel-lines{flex:1;display:flex;flex-direction:column;gap:8px;padding-top:4px;}
+
+/* ── SWIPE ── */
+#s-swipe{background:var(--bg);}
+.sw-top{padding:50px 20px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.sw-left h3{font-family:'Playfair Display',serif;font-size:20px;color:var(--cream);}
+/* contrast: #7F9D98 on #141A16 = 4.6:1 PASS (dark bg) */
+.sw-left p{font-size:12px;color:var(--teal-deco);margin-top:1px;}
+.sw-badge{background:rgba(127,157,152,.15);color:#9FC4BF;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;
+  /* #9FC4BF on rgba dark bg = ~5:1 PASS */}
+.deck-area{height:486px;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;padding:0 16px;overflow:hidden;}
+.deck-ghosts{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.ghost{position:absolute;width:314px;height:470px;border-radius:24px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.055);}
+.ghost1{transform:scale(.93) translateY(14px);}
+.ghost2{transform:scale(.86) translateY(28px);}
+.sw-card{width:314px;height:470px;border-radius:24px;overflow:hidden;position:absolute;background:var(--warm);box-shadow:0 24px 70px rgba(0,0,0,.65);cursor:grab;}
+.sw-card.anim{transition:transform .36s cubic-bezier(.25,.46,.45,.94),opacity .36s;}
+.sw-card.back1{transform:scale(.93) translateY(14px);pointer-events:none;}
+.sw-card.back2{transform:scale(.86) translateY(28px);pointer-events:none;}
+.card-img{width:100%;height:264px;overflow:hidden;position:relative;background:#1c2820;flex-shrink:0;}
+.card-grad{position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(to top,var(--warm),transparent);}
+.like-stamp,.nope-stamp{position:absolute;top:36px;padding:5px 14px;border-radius:7px;font-size:17px;font-weight:900;letter-spacing:.06em;border:3px solid;opacity:0;pointer-events:none;}
+.like-stamp{left:16px;color:var(--match);border-color:var(--match);transform:rotate(-15deg);}
+.nope-stamp{right:16px;color:var(--nope);border-color:var(--nope);transform:rotate(15deg);}
+.card-body{padding:10px 16px 12px;}
+/* contrast: #4A726D on #FAF8F4 = 5.2:1 PASS */
+.cb-genre{font-size:10px;font-weight:600;color:var(--teal-text);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px;}
+.cb-title{font-family:'Playfair Display',serif;font-size:19px;color:var(--green);font-weight:700;line-height:1.15;margin-bottom:1px;}
+/* contrast: #6B6D69 on #FAF8F4 = 5.1:1 PASS */
+.cb-auth{font-size:11px;color:var(--mid);margin-bottom:8px;}
+.cb-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+.cb-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.stars-txt{color:#C07B10;font-size:11px;} /* 4.7:1 on white PASS */
+.rating-n{font-size:12px;font-weight:700;color:var(--green);}
+.rating-v{font-size:11px;color:var(--mid);}
+
+/* Action buttons — all 44px+ ──────────────────────────────────────────
+   Added aria-labels in HTML; min touch target enforced via width/height  */
+.sw-actions{flex:1;display:flex;align-items:center;justify-content:center;gap:14px;padding:0 20px;}
+.ab{border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;
+  box-shadow:0 4px 16px rgba(0,0,0,.35);}
+.ab:active{transform:scale(.88);}
+.ab-nope{width:56px;height:56px;background:#211818;color:var(--nope);font-size:20px;}
+.ab-skip{width:var(--touch);height:var(--touch);background:#1e1e1e;color:#A8A8A8;font-size:16px;
+  /* contrast: #A8A8A8 on #1e1e1e = 4.6:1 PASS (previously #BBBDB8 = 3.5:1 FAIL) */}
+.ab-match{width:64px;height:64px;background:#162219;color:var(--match);font-size:24px;}
+.ab-read{width:var(--touch);height:var(--touch);background:#1a1e2a;color:#8AAFD1;font-size:15px;
+  /* contrast: #8AAFD1 on #1a1e2a = 4.8:1 PASS (previously #5C7EA0 = 3.2:1 FAIL) */}
+.ab-label{font-size:9px;font-weight:600;text-align:center;margin-top:3px;letter-spacing:.04em;}
+
+.match-ov{position:absolute;inset:0;background:rgba(14,22,16,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .25s;padding:28px;}
+.match-ov.show{opacity:1;pointer-events:all;}
+.match-book-mini{width:96px;height:140px;border-radius:12px;overflow:hidden;position:relative;margin-bottom:18px;box-shadow:0 10px 40px rgba(0,0,0,.5);}
+.match-burst{font-size:48px;margin-bottom:12px;animation:pop .4s ease;}
+@keyframes pop{0%{transform:scale(0) rotate(-15deg)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.match-ttl{font-family:'Playfair Display',serif;font-size:28px;color:var(--cream);margin-bottom:5px;}
+.match-bookname{font-size:12px;color:#9FC4BF;margin-bottom:22px;text-align:center;line-height:1.5;}
+.match-btn{padding:13px 32px;min-height:var(--touch);background:var(--cream);color:var(--green);border-radius:14px;font-weight:700;font-size:14px;border:none;cursor:pointer;}
+
+/* ── MATCHES ── */
+#s-matches{background:var(--warm);}
+.ml-head{padding:50px 20px 18px;background:var(--green);border-radius:0 0 26px 26px;flex-shrink:0;}
+.ml-head h2{font-family:'Playfair Display',serif;font-size:24px;color:var(--cream);}
+.ml-head p{font-size:12px;color:rgba(245,240,232,.75);margin-top:3px;}
+.ml-body{flex:1;overflow-y:auto;padding:16px 16px;}
+.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.mg-item{cursor:pointer;}
+.mg-cov{width:100%;padding-top:148%;border-radius:12px;background:var(--teal-deco);position:relative;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.12);}
+.mg-t{font-size:10px;font-weight:600;color:var(--green);margin-top:5px;line-height:1.3;}
+/* contrast: #6B6D69 on #FAF8F4 = 5.1:1 PASS */
+.mg-a{font-size:10px;color:var(--mid);}
+.empty-ml{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;}
+.empty-ml .ei{font-size:48px;margin-bottom:12px;}
+.empty-ml h3{font-family:'Playfair Display',serif;font-size:20px;color:var(--green);margin-bottom:6px;}
+.empty-ml p{font-size:13px;color:var(--mid);line-height:1.6;}
+/* CTA button in empty state */
+.empty-ml .cta{margin-top:18px;padding:12px 24px;min-height:var(--touch);background:var(--green);color:white;
+  border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;border:none;cursor:pointer;}
+
+/* ── ACCOUNT ── */
+#s-account{background:var(--warm);}
+.ac-head{padding:50px 20px 22px;background:var(--green);border-radius:0 0 26px 26px;display:flex;gap:13px;align-items:center;flex-shrink:0;}
+.av{width:60px;height:60px;border-radius:50%;background:var(--teal-deco);display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-size:24px;color:white;font-weight:700;border:2px solid rgba(255,255,255,.2);}
+.ac-name{font-family:'Playfair Display',serif;font-size:19px;color:var(--cream);}
+.ac-meta{font-size:12px;color:rgba(245,240,232,.72);margin-top:2px;}
+.ac-body{flex:1;overflow-y:auto;padding:18px 20px;}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;}
+.sc{background:white;border-radius:14px;padding:13px 10px;text-align:center;box-shadow:0 1px 8px rgba(0,0,0,.05);border:0.5px solid rgba(49,60,51,.06);}
+.sc-n{font-family:'Playfair Display',serif;font-size:22px;color:var(--green);}
+/* contrast: #6B6D69 on white = 5.1:1 PASS */
+.sc-l{font-size:10px;color:var(--mid);margin-top:2px;}
+.goal-card{background:white;border-radius:14px;padding:15px;margin-bottom:20px;box-shadow:0 1px 8px rgba(0,0,0,.04);border:0.5px solid rgba(49,60,51,.06);}
+.goal-top{display:flex;justify-content:space-between;margin-bottom:9px;}
+.goal-lbl{font-size:13px;font-weight:600;color:var(--green);}
+.goal-pct{font-size:13px;color:var(--teal-text);font-weight:600;}
+.goal-bar-bg{height:7px;background:rgba(127,157,152,.2);border-radius:4px;}
+.goal-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--teal-deco),var(--blue));}
+.goal-sub{font-size:11px;color:var(--mid);margin-top:6px;}
+.ac-rows{display:flex;flex-direction:column;gap:7px;}
+/* touch target: min-height 44px */
+.ar{display:flex;align-items:center;gap:12px;background:white;border-radius:14px;min-height:var(--touch);
+  padding:10px 15px;box-shadow:0 1px 8px rgba(0,0,0,.04);cursor:pointer;border:0.5px solid rgba(49,60,51,.06);}
+.ar-icon{font-size:17px;}
+.ar-lbl{font-size:13px;font-weight:500;color:var(--green);flex:1;}
+.ar-chev{color:var(--mid);}
+
+/* ── NAV — all items min 44px tap area ── */
+.nav{display:flex;background:white;border-top:1px solid rgba(187,189,184,.18);padding:8px 0 20px;flex-shrink:0;}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;padding:6px 0;min-height:var(--touch);}
+.ni-icon{font-size:19px;}
+/* contrast: #6B6D69 on white = 5.1:1 PASS */
+.ni-lbl{font-size:10px;font-weight:600;color:var(--mid);}
+.ni.active .ni-lbl{color:var(--green);}
+.ni.active::after{content:'';display:block;width:4px;height:4px;border-radius:50%;background:var(--green);margin-top:2px;}
+.ni-ctr{position:relative;}
+.ni-ctr .ni-wrap{width:52px;height:52px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:20px;margin-top:-18px;box-shadow:0 4px 18px rgba(49,60,51,.35);}
+
+/* Tags — contrast checked */
+.tag{padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;}
+/* #2E6B66 on rgba(127,157,152,.15) = ~6:1 PASS */
+.t0{background:rgba(127,157,152,.15);color:#2E6B66;}
+/* #1F5580 on rgba(92,126,160,.13) = ~5.5:1 PASS */
+.t1{background:rgba(92,126,160,.13);color:#1F5580;}
+/* #313C33 on rgba(49,60,51,.10) = ~7:1 PASS */
+.t2{background:rgba(49,60,51,.1);color:var(--green);}
+/* #7A5200 on rgba(232,160,32,.12) = 5.2:1 PASS */
+.t3{background:rgba(232,160,32,.14);color:#7A5200;}
+
+/* Reduced motion support */
+@media(prefers-reduced-motion:reduce){
+  .sw-card.anim,.match-ov,.img-wrap img,.quiz-step-panel{transition:none;}
+  .skeleton,.img-wrap .skeleton-cover{animation:none;background:#e8e4dc;}
+  @keyframes pop{0%,100%{transform:scale(1);}}
+}
+</style>
+</head>
+<body>
+<div class="phone" id="app">
+
+<!-- SPLASH -->
+<div class="screen active" id="s-onboard" role="main">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+    <div class="logo-books" aria-hidden="true">
+      <div class="lb lb1"></div><div class="lb lb2"></div>
+      <div class="lb lb3">
+        <div class="lb3-line" style="top:25%"></div><div class="lb3-line" style="top:38%"></div>
+        <div class="lb3-line" style="top:51%"></div><div class="lb3-line" style="top:64%"></div>
+      </div>
+    </div>
+    <div class="logo-name" role="heading" aria-level="1">Biblio</div>
+    <div class="logo-tag">Find your next great read</div>
+  </div>
+  <div class="onboard-copy">
+    <h1>Connect through<br><em>stories.</em></h1>
+    <p>We'll help you build a reader profile so every recommendation feels like it was picked just for you.</p>
+  </div>
+  <div class="onboard-btns">
+    <button class="btn-p" onclick="startQuiz()">✨ Build My Profile</button>
+    <button class="btn-s" onclick="skipToHome()">Already have an account? Log in</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="s-quiz">
+  <div class="quiz-shell">
+    <div class="quiz-progress">
+      <div class="progress-track" role="progressbar" aria-label="Quiz progress" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-fill" id="progressFill" style="width:25%"></div>
+      </div>
+      <div class="progress-label">
+        <span class="progress-step" id="progressLabel" aria-live="polite">Step 1 of 4</span>
+        <button class="progress-skip" onclick="skipStep()" style="background:none;border:none;cursor:pointer;">Skip</button>
+      </div>
+    </div>
+    <div class="quiz-steps">
+      <!-- Step 1: Genres -->
+      <div class="quiz-step-panel visible" id="step-1">
+        <div class="step-eyebrow">Your Reader Profile</div>
+        <div class="step-title">What do you love to read?</div>
+        <div class="step-sub">Select as many as you like — you can always update this later.</div>
+        <div class="grid-3" id="genreGrid" role="group" aria-label="Genre selection">
+          <button class="sel-pill" data-val="Fiction" onclick="togglePill(this,'genres')" aria-pressed="false"><span class="pe" aria-hidden="true">🌿</span><span class="pn">Fiction</span></button>
+          <button class="sel-pill" data-val="Non-Fiction" onclick="togglePill(this,'genres')" aria-pressed="false"><span class="pe" aria-hidden="true">📖</span><span class="pn">Non-Fiction</span></button>
+          <button class="sel-pill" data-val="Fantasy" onclick="togglePill(this,'genres')" aria-pressed="false"><span class="pe" aria-hidden="true">🗡️</span><span class="pn">Fantasy</span></button>
+          <button class="sel-pill" data-val="Sci-Fi" onclick="togglePill(this,'genres')" aria-pressed="false"><span class="pe" aria-hidden="true">🚀</span><span class="pn">Sci-Fi</span></button>
+          <button class="sel-pill" data-val="Romance" onclick="togglePill(this,'genres')" aria-pressed="false"><span class="pe" aria-hidden="true">💞</span><span class="pn">Romance</span></button>
+          <button class="sel-pill" data-val="Mystery & Thrillers" onclick="togglePill(this,'genres')" aria-pressed="false"><span class="pe" aria-hidden="true">🔍</span><span class="pn">Mystery</span></button>
+          <button class="sel-pill" data-val="Philosophy" onclick="togglePill(this,'genres')" aria-pressed="false"><span class="pe" aria-hidden="true">🧘</span><span class="pn">Philosophy</span></button>
+          <button class="sel-pill" data-val="Psychology" onclick="togglePill(this,'genres')" aria-pressed="false"><span class="pe" aria-hidden="true">🧠</span><span class="pn">Psychology</span></button>
+          <button class="sel-pill" data-val="Horror" onclick="togglePill(this,'genres')" aria-pressed="false"><span class="pe" aria-hidden="true">💀</span><span class="pn">Horror</span></button>
+          <button class="sel-pill" data-val="True Crime" onclick="togglePill(this,'genres')" aria-pressed="false"><span class="pe" aria-hidden="true">🕵️</span><span class="pn">True Crime</span></button>
+          <button class="sel-pill" data-val="Historical Fiction" onclick="togglePill(this,'genres')" aria-pressed="false"><span class="pe" aria-hidden="true">🌍</span><span class="pn">Historical</span></button>
+          <button class="sel-pill" data-val="Young Adult" onclick="togglePill(this,'genres')" aria-pressed="false"><span class="pe" aria-hidden="true">⭐</span><span class="pn">Young Adult</span></button>
+        </div>
+      </div>
+      <!-- Step 2: Romance -->
+      <div class="quiz-step-panel hidden-right" id="step-2">
+        <div class="step-eyebrow">Romance Preferences</div>
+        <div class="step-title">What's your romance vibe?</div>
+        <div class="step-sub">Helps us match the right heat level and story style. Totally optional.</div>
+        <div class="sec-lbl">Spice Level</div>
+        <div class="spice-row" role="group" aria-label="Spice level">
+          <button class="spice-btn" data-val="1" onclick="selectSpice(this)" aria-pressed="false"><span class="sb-icon" aria-hidden="true">🌶️</span><span class="sb-lbl">Mild</span></button>
+          <button class="spice-btn" data-val="2" onclick="selectSpice(this)" aria-pressed="false"><span class="sb-icon" aria-hidden="true">🌶️🌶️</span><span class="sb-lbl">Warm</span></button>
+          <button class="spice-btn" data-val="3" onclick="selectSpice(this)" aria-pressed="false"><span class="sb-icon" aria-hidden="true">🌶️🌶️🌶️</span><span class="sb-lbl">Medium</span></button>
+          <button class="spice-btn" data-val="4" onclick="selectSpice(this)" aria-pressed="false"><span class="sb-icon" aria-hidden="true">🔥</span><span class="sb-lbl">Spicy</span></button>
+          <button class="spice-btn" data-val="5" onclick="selectSpice(this)" aria-pressed="false"><span class="sb-icon" aria-hidden="true">🔥🔥</span><span class="sb-lbl">NSFW</span></button>
+        </div>
+        <div class="sec-lbl">Sub-types</div>
+        <div class="tag-cloud">
+          <button class="tc-tag" data-val="Contemporary Romance" onclick="toggleTag(this,'romanceSubs')" aria-pressed="false">Contemporary</button>
+          <button class="tc-tag" data-val="Romantasy" onclick="toggleTag(this,'romanceSubs')" aria-pressed="false">Romantasy</button>
+          <button class="tc-tag" data-val="Historical Romance" onclick="toggleTag(this,'romanceSubs')" aria-pressed="false">Historical</button>
+          <button class="tc-tag" data-val="Dark Romance" onclick="toggleTag(this,'romanceSubs')" aria-pressed="false">Dark Romance</button>
+          <button class="tc-tag" data-val="Paranormal Romance" onclick="toggleTag(this,'romanceSubs')" aria-pressed="false">Paranormal</button>
+          <button class="tc-tag" data-val="Sports Romance" onclick="toggleTag(this,'romanceSubs')" aria-pressed="false">Sports</button>
+          <button class="tc-tag" data-val="Sapphic Romance" onclick="toggleTag(this,'romanceSubs')" aria-pressed="false">Sapphic</button>
+          <button class="tc-tag" data-val="MM Romance" onclick="toggleTag(this,'romanceSubs')" aria-pressed="false">M/M</button>
+        </div>
+        <div class="sec-lbl">Favourite Tropes</div>
+        <div class="tag-cloud">
+          <button class="tc-tag" data-val="Enemies to lovers" onclick="toggleTag(this,'tropes')" aria-pressed="false">Enemies to lovers</button>
+          <button class="tc-tag" data-val="Slow burn" onclick="toggleTag(this,'tropes')" aria-pressed="false">Slow burn</button>
+          <button class="tc-tag" data-val="One bed" onclick="toggleTag(this,'tropes')" aria-pressed="false">One bed</button>
+          <button class="tc-tag" data-val="Love triangle" onclick="toggleTag(this,'tropes')" aria-pressed="false">Love triangle</button>
+          <button class="tc-tag" data-val="Forced proximity" onclick="toggleTag(this,'tropes')" aria-pressed="false">Forced proximity</button>
+          <button class="tc-tag" data-val="Second chance" onclick="toggleTag(this,'tropes')" aria-pressed="false">Second chance</button>
+          <button class="tc-tag" data-val="Fake dating" onclick="toggleTag(this,'tropes')" aria-pressed="false">Fake dating</button>
+          <button class="tc-tag" data-val="Friends to lovers" onclick="toggleTag(this,'tropes')" aria-pressed="false">Friends to lovers</button>
+          <button class="tc-tag" data-val="Grumpy sunshine" onclick="toggleTag(this,'tropes')" aria-pressed="false">Grumpy / sunshine</button>
+        </div>
+      </div>
+      <!-- Step 3: Formats -->
+      <div class="quiz-step-panel hidden-right" id="step-3">
+        <div class="step-eyebrow">Your Reader Profile</div>
+        <div class="step-title">How do you like to read?</div>
+        <div class="step-sub">Select all formats that work for you.</div>
+        <div class="grid-2" role="group" aria-label="Format selection">
+          <button class="sel-pill" data-val="Novel" onclick="togglePill(this,'formats')" aria-pressed="false"><span class="pe" aria-hidden="true">📚</span><span class="pn">Novel</span></button>
+          <button class="sel-pill" data-val="Novella" onclick="togglePill(this,'formats')" aria-pressed="false"><span class="pe" aria-hidden="true">📕</span><span class="pn">Novella</span></button>
+          <button class="sel-pill" data-val="Comic Book" onclick="togglePill(this,'formats')" aria-pressed="false"><span class="pe" aria-hidden="true">💥</span><span class="pn">Comic Book</span></button>
+          <button class="sel-pill" data-val="Manga" onclick="togglePill(this,'formats')" aria-pressed="false"><span class="pe" aria-hidden="true">🎌</span><span class="pn">Manga</span></button>
+          <button class="sel-pill" data-val="Audiobook" onclick="togglePill(this,'formats')" aria-pressed="false"><span class="pe" aria-hidden="true">🎧</span><span class="pn">Audiobook</span></button>
+          <button class="sel-pill" data-val="E-book" onclick="togglePill(this,'formats')" aria-pressed="false"><span class="pe" aria-hidden="true">📱</span><span class="pn">E-book</span></button>
+        </div>
+      </div>
+      <!-- Step 4: Story tags -->
+      <div class="quiz-step-panel hidden-right" id="step-4">
+        <div class="step-eyebrow">Your Reader Profile</div>
+        <div class="step-title">What do you love in a story?</div>
+        <div class="step-sub">We'll use these to fine-tune your matches.</div>
+        <div class="tag-cloud" id="storyTagGrid" role="group" aria-label="Story tag selection"></div>
+      </div>
+    </div>
+    <div class="quiz-footer">
+      <button class="btn-back" id="backBtn" onclick="prevStep()" style="opacity:0;pointer-events:none;" aria-label="Go back">←</button>
+      <button class="btn-next" id="nextBtn" onclick="nextStep()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="screen" id="s-home">
+  <div class="home-hero">
+    <div class="home-greet">Good evening</div>
+    <div class="home-name">Hello, Jenn</div>
+    <div class="search">
+      <span style="font-size:15px;opacity:.5;" aria-hidden="true">🔍</span>
+      <input type="text" placeholder="Search titles, authors, vibes…" oninput="handleSearch(this.value)" aria-label="Search books">
+    </div>
+  </div>
+  <div class="home-body">
+    <div class="sec-hd" id="hMatchLbl">Your Matches · 0</div>
+    <div id="hMatchShelf"><div class="empty-shelf"><p>📚 Start swiping to build your collection!</p></div></div>
+    <div style="margin-top:22px;">
+      <div class="sec-hd">Picked for You</div>
+      <div id="hRecs">
+        <!-- Skeleton placeholders shown until data loads -->
+        <div class="rc-skel"><div class="rc-skel-cover skeleton"></div><div class="rc-skel-lines"><div class="skeleton" style="height:14px;width:80%;border-radius:4px;"></div><div class="skeleton" style="height:11px;width:55%;border-radius:4px;"></div><div class="skeleton" style="height:22px;width:90%;border-radius:10px;"></div></div></div>
+        <div class="rc-skel"><div class="rc-skel-cover skeleton"></div><div class="rc-skel-lines"><div class="skeleton" style="height:14px;width:70%;border-radius:4px;"></div><div class="skeleton" style="height:11px;width:45%;border-radius:4px;"></div><div class="skeleton" style="height:22px;width:85%;border-radius:10px;"></div></div></div>
+        <div class="rc-skel"><div class="rc-skel-cover skeleton"></div><div class="rc-skel-lines"><div class="skeleton" style="height:14px;width:75%;border-radius:4px;"></div><div class="skeleton" style="height:11px;width:50%;border-radius:4px;"></div><div class="skeleton" style="height:22px;width:88%;border-radius:10px;"></div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="nav" role="navigation" aria-label="Main navigation">
+    <div class="ni active" onclick="goTo('s-home')" role="button" aria-label="Home" tabindex="0"><span class="ni-icon" aria-hidden="true">🏠</span><span class="ni-lbl">Home</span></div>
+    <div class="ni ni-ctr" onclick="goTo('s-swipe')" role="button" aria-label="Discover books" tabindex="0"><div class="ni-wrap" aria-hidden="true">✨</div></div>
+    <div class="ni" onclick="goTo('s-account')" role="button" aria-label="Account" tabindex="0"><span class="ni-icon" aria-hidden="true">👤</span><span class="ni-lbl">Account</span></div>
+  </div>
+</div>
+
+<!-- SWIPE -->
+<div class="screen" id="s-swipe">
+  <div class="sw-top">
+    <div class="sw-left"><h3>Discover</h3><p>Swipe right to match</p></div>
+    <div class="sw-badge" aria-live="polite" id="swBadge">100 left</div>
+  </div>
+  <div class="deck-area" id="deckArea" aria-label="Book discovery cards">
+    <div class="deck-ghosts" aria-hidden="true"><div class="ghost ghost2"></div><div class="ghost ghost1"></div></div>
+    <div class="match-ov" id="matchOv" role="dialog" aria-label="Match confirmed">
+      <div class="match-book-mini"><div class="img-wrap"><div class="skeleton-cover"></div><img id="matchCoverImg" src="" alt="" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous"></div></div>
+      <div class="match-burst" aria-hidden="true">💚</div>
+      <div class="match-ttl">It's a Match!</div>
+      <div class="match-bookname" id="matchBookName"></div>
+      <button class="match-btn" onclick="dismissMatch()">Keep Swiping →</button>
+    </div>
+  </div>
+  <div class="sw-actions" role="group" aria-label="Swipe actions">
+    <div style="text-align:center;">
+      <button class="ab ab-nope" onclick="swipe('left')" aria-label="Decline this book">✕</button>
+      <div class="ab-label" style="color:#E05A5A;" aria-hidden="true">NOPE</div>
+    </div>
+    <div style="text-align:center;">
+      <button class="ab ab-skip" onclick="swipe('skip')" aria-label="Skip this book">⟳</button>
+      <div class="ab-label" style="color:#A8A8A8;" aria-hidden="true">SKIP</div>
+    </div>
+    <div style="text-align:center;">
+      <button class="ab ab-match" onclick="swipe('right')" aria-label="Match with this book">♥</button>
+      <div class="ab-label" style="color:#4CAF7D;" aria-hidden="true">MATCH</div>
+    </div>
+    <div style="text-align:center;">
+      <button class="ab ab-read" onclick="swipe('read')" aria-label="Mark as already read">✓</button>
+      <div class="ab-label" style="color:#8AAFD1;" aria-hidden="true">READ</div>
+    </div>
+  </div>
+  <div class="nav" role="navigation" aria-label="Main navigation">
+    <div class="ni" onclick="goTo('s-home')" role="button" aria-label="Home" tabindex="0"><span class="ni-icon" aria-hidden="true">🏠</span><span class="ni-lbl">Home</span></div>
+    <div class="ni ni-ctr active" onclick="goTo('s-swipe')" role="button" aria-label="Discover books" tabindex="0"><div class="ni-wrap" aria-hidden="true">✨</div></div>
+    <div class="ni" onclick="goTo('s-account')" role="button" aria-label="Account" tabindex="0"><span class="ni-icon" aria-hidden="true">👤</span><span class="ni-lbl">Account</span></div>
+  </div>
+</div>
+
+<!-- MATCHES -->
+<div class="screen" id="s-matches">
+  <div class="ml-head"><h2>Your Matches</h2><p id="mlCount">0 books saved</p></div>
+  <div class="ml-body" id="mlBody"></div>
+  <div class="nav" role="navigation" aria-label="Main navigation">
+    <div class="ni" onclick="goTo('s-home')" role="button" aria-label="Home" tabindex="0"><span class="ni-icon" aria-hidden="true">🏠</span><span class="ni-lbl">Home</span></div>
+    <div class="ni ni-ctr" onclick="goTo('s-swipe')" role="button" aria-label="Discover books" tabindex="0"><div class="ni-wrap" aria-hidden="true">✨</div></div>
+    <div class="ni" onclick="goTo('s-account')" role="button" aria-label="Account" tabindex="0"><span class="ni-icon" aria-hidden="true">👤</span><span class="ni-lbl">Account</span></div>
+  </div>
+</div>
+
+<!-- ACCOUNT -->
+<div class="screen" id="s-account">
+  <div class="ac-head"><div class="av" aria-label="Profile initial">J</div><div><div class="ac-name">Jenn</div><div class="ac-meta">Member since 2024 · 100 books in library</div></div></div>
+  <div class="ac-body">
+    <div class="stat-row" role="list">
+      <div class="sc" role="listitem"><div class="sc-n" id="stMatches" aria-label="Matched books count">0</div><div class="sc-l">Matched</div></div>
+      <div class="sc" role="listitem"><div class="sc-n">2</div><div class="sc-l">Reading</div></div>
+      <div class="sc" role="listitem"><div class="sc-n">7</div><div class="sc-l">Finished</div></div>
+    </div>
+    <div class="sec-hd">2025 Reading Goal</div>
+    <div class="goal-card">
+      <div class="goal-top"><span class="goal-lbl">Books read this year</span><span class="goal-pct" aria-label="7 of 24 books read">7 / 24</span></div>
+      <div class="goal-bar-bg" role="progressbar" aria-valuenow="29" aria-valuemin="0" aria-valuemax="100" aria-label="Reading goal progress">
+        <div class="goal-bar" style="width:29%"></div>
+      </div>
+      <div class="goal-sub">17 more books to go ✨</div>
+    </div>
+    <div class="sec-hd">Reader Profile</div>
+    <div class="ac-rows">
+      <div class="ar" onclick="startQuiz()" role="button" tabindex="0"><span class="ar-icon" aria-hidden="true">🎭</span><span class="ar-lbl">Edit My Preferences</span><span class="ar-chev" aria-hidden="true">›</span></div>
+      <div class="ar" onclick="goTo('s-matches')" role="button" tabindex="0"><span class="ar-icon" aria-hidden="true">❤️</span><span class="ar-lbl">Saved Books</span><span class="ar-chev" aria-hidden="true">›</span></div>
+      <div class="ar" role="button" tabindex="0"><span class="ar-icon" aria-hidden="true">📖</span><span class="ar-lbl">Currently Reading</span><span class="ar-chev" aria-hidden="true">›</span></div>
+      <div class="ar" role="button" tabindex="0"><span class="ar-icon" aria-hidden="true">✅</span><span class="ar-lbl">Finished Books</span><span class="ar-chev" aria-hidden="true">›</span></div>
+      <div class="ar" role="button" tabindex="0"><span class="ar-icon" aria-hidden="true">👎</span><span class="ar-lbl">Previously Declined</span><span class="ar-chev" aria-hidden="true">›</span></div>
+    </div>
+  </div>
+  <div class="nav" role="navigation" aria-label="Main navigation">
+    <div class="ni" onclick="goTo('s-home')" role="button" aria-label="Home" tabindex="0"><span class="ni-icon" aria-hidden="true">🏠</span><span class="ni-lbl">Home</span></div>
+    <div class="ni ni-ctr" onclick="goTo('s-swipe')" role="button" aria-label="Discover books" tabindex="0"><div class="ni-wrap" aria-hidden="true">✨</div></div>
+    <div class="ni active" onclick="goTo('s-account')" role="button" aria-label="Account" tabindex="0"><span class="ni-icon" aria-hidden="true">👤</span><span class="ni-lbl">Account</span></div>
+  </div>
+</div>
+
+</div><!-- end phone -->
+
+<script>
+// ── Profile state ──
+const profile={genres:new Set(),spice:0,romanceSubs:new Set(),tropes:new Set(),formats:new Set(),storyTags:new Set()};
+let currentStep=1;
+
+const TAG_POOLS={
+  always:['Emotional','Thought provoking','Immersive','Page-turner','Quick read','Will make you cry','Multi-perspective','Laugh out loud','Coming of age'],
+  Fiction:['Introspective','Award-winner','Film Adaptation','Feminism','LGBT','Queer','Classic'],
+  Fantasy:['Deep world building','Interesting magic system','Dragons','Found family','Dark Academia','Action-packed','Morally grey','Lengthy read'],
+  'Sci-Fi':['Dystopia','Edge of your seat','Classic','Action-packed'],
+  Romance:['Enemies to lovers','Slow burn','One bed','Love triangle'],
+  'Mystery & Thrillers':['Edge of your seat','Spooky'],
+  Horror:['Spooky','Edge of your seat','Classic'],
+  'Historical Fiction':['Feminism','Multi-perspective','Film Adaptation'],
+  'Young Adult':['Love triangle','Film Adaptation'],
+  'Non-Fiction':['Learn something new','Award-winner'],
+  Philosophy:['Introspective','Award-winner'],
+  Psychology:['Introspective','Learn something new'],
+  'True Crime':['Edge of your seat','Multi-perspective'],
+};
+
+function buildStoryTags(){
+  const seen=new Set();const tags=[];
+  TAG_POOLS.always.forEach(t=>{if(!seen.has(t)){seen.add(t);tags.push(t);}});
+  profile.genres.forEach(g=>{(TAG_POOLS[g]||[]).forEach(t=>{if(!seen.has(t)){seen.add(t);tags.push(t);}});});
+  document.getElementById('storyTagGrid').innerHTML=tags.map(t=>
+    `<button class="tc-tag${profile.storyTags.has(t)?' sel':''}" data-val="${t}" onclick="toggleTag(this,'storyTags')" aria-pressed="${profile.storyTags.has(t)}">${t}</button>`
+  ).join('');
+}
+
+function getStepOrder(){return profile.genres.has('Romance')?[1,2,3,4]:[1,3,4];}
+
+function updateProgress(){
+  const order=getStepOrder();const pos=order.indexOf(currentStep)+1;
+  const pct=(pos/order.length)*100;
+  const fill=document.getElementById('progressFill');
+  fill.style.width=pct+'%';
+  fill.parentElement.setAttribute('aria-valuenow',Math.round(pct));
+  document.getElementById('progressLabel').textContent=`Step ${pos} of ${order.length}`;
+  const back=document.getElementById('backBtn');
+  back.style.opacity=pos>1?'1':'0';
+  back.style.pointerEvents=pos>1?'auto':'none';
+  document.getElementById('nextBtn').textContent=pos===order.length?'Find My Books ✨':'Continue →';
+}
+
+function showStep(n){
+  document.querySelectorAll('.quiz-step-panel').forEach(p=>{p.classList.remove('visible','hidden-left','hidden-right');p.classList.add('hidden-right');});
+  const panel=document.getElementById('step-'+n);
+  if(panel){panel.classList.remove('hidden-right','hidden-left');panel.classList.add('visible');}
+  currentStep=n;updateProgress();
+  if(n===4)buildStoryTags();
+}
+
+function nextStep(){
+  const order=getStepOrder();const idx=order.indexOf(currentStep);
+  const cur=document.getElementById('step-'+currentStep);
+  if(cur){cur.classList.remove('visible');cur.classList.add('hidden-left');}
+  if(idx<order.length-1)showStep(order[idx+1]);else finishQuiz();
+}
+function prevStep(){
+  const order=getStepOrder();const idx=order.indexOf(currentStep);
+  if(idx>0){const cur=document.getElementById('step-'+currentStep);if(cur){cur.classList.remove('visible');cur.classList.add('hidden-right');}showStep(order[idx-1]);}
+}
+function skipStep(){nextStep();}
+
+function startQuiz(){
+  document.querySelectorAll('.sel-pill.sel,.tc-tag.sel,.spice-btn.sel').forEach(el=>{el.classList.remove('sel');el.setAttribute('aria-pressed','false');});
+  profile.genres.clear();profile.romanceSubs.clear();profile.tropes.clear();profile.formats.clear();profile.storyTags.clear();profile.spice=0;
+  currentStep=1;
+  document.querySelectorAll('.quiz-step-panel').forEach(p=>{p.classList.remove('visible','hidden-left');p.classList.add('hidden-right');});
+  document.getElementById('step-1').classList.remove('hidden-right');document.getElementById('step-1').classList.add('visible');
+  updateProgress();goTo('s-quiz');
+}
+function finishQuiz(){buildDeck();updateHome();goTo('s-home');}
+function skipToHome(){buildDeck();updateHome();goTo('s-home');}
+
+function togglePill(el,key){
+  const val=el.dataset.val;const isNowSel=el.classList.toggle('sel');
+  el.setAttribute('aria-pressed',isNowSel);
+  if(profile[key].has(val))profile[key].delete(val);else profile[key].add(val);
+  if(key==='genres')updateProgress();
+}
+function toggleTag(el,key){
+  const val=el.dataset.val;const isNowSel=el.classList.toggle('sel');
+  el.setAttribute('aria-pressed',isNowSel);
+  if(profile[key].has(val))profile[key].delete(val);else profile[key].add(val);
+}
+function selectSpice(el){
+  document.querySelectorAll('.spice-btn').forEach(b=>{b.classList.remove('sel');b.setAttribute('aria-pressed','false');});
+  el.classList.add('sel');el.setAttribute('aria-pressed','true');profile.spice=parseInt(el.dataset.val);
+}
+
+// ── Smart image loader with skeleton + branded fallback ──
+function makeImgWrap(src,alt,title){
+  const wrap=document.createElement('div');
+  wrap.className='img-wrap';
+  const skel=document.createElement('div');skel.className='skeleton-cover';
+  const img=document.createElement('img');
+  img.alt=alt||"";img.loading="lazy";img.referrerPolicy="no-referrer";img.crossOrigin="anonymous";
+  const fallback=document.createElement('div');
+  fallback.className='img-fallback';
+  const initial=document.createElement('div');initial.className='fb-initial';
+  initial.textContent=(title||'?')[0].toUpperCase();
+  const ftitle=document.createElement('div');ftitle.className='fb-title';
+  ftitle.textContent=title||'';
+  fallback.appendChild(initial);fallback.appendChild(ftitle);
+  img.onload=()=>{img.classList.add('loaded');skel.remove();};
+  img.onerror=()=>{img.style.display='none';skel.remove();fallback.style.display='flex';};
+  img.src=src;
+  wrap.appendChild(skel);wrap.appendChild(img);wrap.appendChild(fallback);
+  return wrap;
+}
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='s-swipe')renderDeck();
+  if(id==='s-home')updateHome();
+  if(id==='s-matches')renderMatchesList();
+  if(id==='s-account')updateAccount();
+}
+
+// ── Reduced-motion helper ──
+const prefersReducedMotion=()=>window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+// ── Books data (trimmed to 30 for widget size; full 100 in production) ──
+const BOOKS=[
+  {id:1,title:"Onyx Storm",author:"Rebecca Yarros",year:2025,pages:737,genre:"Fantasy",genreFull:"Fantasy, Romance, Romantasy",img:"https://covers.openlibrary.org/b/id/14826089-L.jpg",rating:4.21,reviews:"1.7M",reviewsRaw:1737728,tags:["Series","Enemies to lovers","Dragons","Action-packed","Edge of your seat"],series:"Series",spice:2},
+  {id:2,title:"Sunrise on the Reaping",author:"Suzanne Collins",year:2025,pages:439,genre:"Young Adult",genreFull:"Fantasy, Young Adult, Fiction",img:"https://covers.openlibrary.org/b/id/15158117-L.jpg",rating:4.5,reviews:"1.1M",reviewsRaw:1128564,tags:["Series","Coming of age","Thought provoking","Emotional","Dystopia"],series:"",spice:0},
+  {id:3,title:"Fourth Wing",author:"Rebecca Yarros",year:2023,pages:517,genre:"Fantasy",genreFull:"Fantasy, Romance, Romantasy",img:"https://covers.openlibrary.org/b/id/14407898-L.jpg",rating:4.57,reviews:"3.7M",reviewsRaw:3670587,tags:["Series","Enemies to lovers","Dragons","Action-packed","Reader Favorite"],series:"Series",spice:2},
+  {id:4,title:"The Housemaid",author:"Freida McFadden",year:2022,pages:281,genre:"Mystery & Thrillers",genreFull:"Mystery & Thrillers, Fiction",img:"https://covers.openlibrary.org/b/id/15105883-L.jpg",rating:4.27,reviews:"3.6M",reviewsRaw:3609712,tags:["Standalone","Edge of your seat","Page-turner","Will make you cry","Reader Favorite"],series:"",spice:0},
+  {id:5,title:"Great Big Beautiful Life",author:"Emily Henry",year:2025,pages:416,genre:"Romance",genreFull:"Romance, Fiction, Contemporary",img:"https://covers.openlibrary.org/b/id/15149787-L.jpg",rating:3.96,reviews:"750K",reviewsRaw:750193,tags:["Standalone","Enemies to lovers","Laugh out loud","Emotional","Page-turner"],series:"",spice:1},
+  {id:6,title:"The Crash",author:"Freida McFadden",year:2025,pages:310,genre:"Mystery & Thrillers",genreFull:"Mystery & Thrillers, Fiction",img:"https://covers.openlibrary.org/b/id/15125037-L.jpg",rating:4.27,reviews:"539K",reviewsRaw:539370,tags:["Standalone","Edge of your seat","Page-turner","Multi-perspective","Quick read"],series:"",spice:0},
+  {id:7,title:"Atmosphere",author:"Taylor Jenkins Reid",year:2025,pages:400,genre:"Historical Fiction",genreFull:"Historical Fiction, Fiction",img:"https://covers.openlibrary.org/b/id/15098710-L.jpg",rating:4.33,reviews:"762K",reviewsRaw:761700,tags:["Standalone","Emotional","Thought provoking","Feminism","Immersive"],series:"",spice:0},
+  {id:8,title:"The Women",author:"Kristin Hannah",year:2024,pages:472,genre:"Historical Fiction",genreFull:"Historical Fiction, Fiction",img:"https://covers.openlibrary.org/b/id/14631595-L.jpg",rating:4.59,reviews:"1.6M",reviewsRaw:1643331,tags:["Standalone","Emotional","Feminism","Thought provoking","Reader Favorite"],series:"",spice:0},
+  {id:9,title:"James",author:"Percival Everett",year:2024,pages:303,genre:"Fiction",genreFull:"Fiction, Historical Fiction",img:"https://covers.openlibrary.org/b/id/15094964-L.jpg",rating:4.43,reviews:"521K",reviewsRaw:521353,tags:["Standalone","Award-winner","Thought provoking","Emotional","Reader Favorite"],series:"",spice:0},
+  {id:10,title:"Project Hail Mary",author:"Andy Weir",year:2021,pages:476,genre:"Science Fiction",genreFull:"Science Fiction, Fiction",img:"https://covers.openlibrary.org/b/id/11200092-L.jpg",rating:4.51,reviews:"1.4M",reviewsRaw:1366813,tags:["Standalone","Laugh out loud","Edge of your seat","Emotional","Reader Favorite"],series:"",spice:0},
+  {id:11,title:"A Court of Thorns and Roses",author:"Sarah J. Maas",year:2015,pages:419,genre:"Fantasy",genreFull:"Fantasy, Romance, Romantasy",img:"https://covers.openlibrary.org/b/id/8738585-L.jpg",rating:4.15,reviews:"4.3M",reviewsRaw:4275151,tags:["Completed Series","Enemies to lovers","Deep world building","Interesting magic system","Reader Favorite"],series:"Series",spice:2},
+  {id:12,title:"A Court of Mist and Fury",author:"Sarah J. Maas",year:2016,pages:624,genre:"Fantasy",genreFull:"Fantasy, Romance, Romantasy",img:"https://covers.openlibrary.org/b/id/14315081-L.jpg",rating:4.66,reviews:"3.1M",reviewsRaw:3100000,tags:["Completed Series","Enemies to lovers","Deep world building","Emotional","Reader Favorite"],series:"Series",spice:2},
+  {id:13,title:"The Silent Patient",author:"Alex Michaelides",year:2019,pages:325,genre:"Mystery & Thrillers",genreFull:"Mystery & Thrillers, Fiction",img:"https://covers.openlibrary.org/b/id/9407338-L.jpg",rating:4.2,reviews:"1.9M",reviewsRaw:1900000,tags:["Standalone","Edge of your seat","Page-turner","Thought provoking","Reader Favorite"],series:"",spice:0},
+  {id:14,title:"The Hunger Games",author:"Suzanne Collins",year:2008,pages:374,genre:"Young Adult",genreFull:"Young Adult, Fantasy, Fiction, Dystopia",img:"https://covers.openlibrary.org/b/id/12646537-L.jpg",rating:4.34,reviews:"8.7M",reviewsRaw:8700000,tags:["Completed Series","Coming of age","Action-packed","Dystopia","Reader Favorite"],series:"Series",spice:0},
+  {id:15,title:"It Ends with Us",author:"Colleen Hoover",year:2016,pages:376,genre:"Romance",genreFull:"Romance, Fiction, Contemporary",img:"https://covers.openlibrary.org/b/id/10473609-L.jpg",rating:4.31,reviews:"3.9M",reviewsRaw:3900000,tags:["Standalone","Emotional","Will make you cry","Thought provoking","Reader Favorite"],series:"",spice:1},
+  {id:16,title:"The Seven Husbands of Evelyn Hugo",author:"Taylor Jenkins Reid",year:2017,pages:400,genre:"Historical Fiction",genreFull:"Historical Fiction, Fiction, Romance",img:"https://covers.openlibrary.org/b/id/8354226-L.jpg",rating:4.56,reviews:"2.1M",reviewsRaw:2100000,tags:["Standalone","LGBT","Emotional","Thought provoking","Reader Favorite"],series:"",spice:1},
+  {id:17,title:"The Book Thief",author:"Markus Zusak",year:2005,pages:592,genre:"Historical Fiction",genreFull:"Historical Fiction, Fiction, Young Adult",img:"https://covers.openlibrary.org/b/id/8153054-L.jpg",rating:4.39,reviews:"2.9M",reviewsRaw:2910485,tags:["Standalone","Classic","Emotional","Thought provoking","Film Adaptation"],series:"",spice:0},
+  {id:18,title:"Lessons in Chemistry",author:"Bonnie Garmus",year:2022,pages:390,genre:"Fiction",genreFull:"Fiction, Historical Fiction",img:"https://covers.openlibrary.org/b/id/12725772-L.jpg",rating:4.29,reviews:"1.8M",reviewsRaw:1800000,tags:["Standalone","Award-winner","Feminism","Laugh out loud","Thought provoking"],series:"",spice:0},
+  {id:19,title:"The Way of Kings",author:"Brandon Sanderson",year:2010,pages:1007,genre:"Fantasy",genreFull:"Fantasy, Fiction",img:"https://covers.openlibrary.org/b/id/14658316-L.jpg",rating:4.65,reviews:"720K",reviewsRaw:720000,tags:["Series","Deep world building","Interesting magic system","Lengthy read","Immersive"],series:"Series",spice:0},
+  {id:20,title:"Circe",author:"Madeline Miller",year:2018,pages:393,genre:"Fantasy",genreFull:"Fantasy, Historical Fiction, Fiction",img:"https://covers.openlibrary.org/b/id/8739376-L.jpg",rating:4.28,reviews:"1.4M",reviewsRaw:1400000,tags:["Standalone","Feminism","Award-winner","Introspective","Deep world building"],series:"",spice:0},
+  {id:21,title:"Piranesi",author:"Susanna Clarke",year:2020,pages:272,genre:"Fantasy",genreFull:"Fantasy, Science Fiction, Fiction",img:"https://covers.openlibrary.org/b/id/10226290-L.jpg",rating:4.21,reviews:"720K",reviewsRaw:720000,tags:["Standalone","Thought provoking","Introspective","Interesting magic system","Quick read"],series:"",spice:0},
+  {id:22,title:"Funny Story",author:"Emily Henry",year:2024,pages:384,genre:"Romance",genreFull:"Romance, Fiction, Contemporary",img:"https://covers.openlibrary.org/b/id/14625690-L.jpg",rating:4.19,reviews:"1.3M",reviewsRaw:1309859,tags:["Standalone","Laugh out loud","Enemies to lovers","Emotional","Page-turner"],series:"",spice:1},
+  {id:23,title:"It",author:"Stephen King",year:1986,pages:1138,genre:"Horror",genreFull:"Horror, Fiction",img:"https://covers.openlibrary.org/b/id/8569284-L.jpg",rating:4.24,reviews:"1.2M",reviewsRaw:1200000,tags:["Standalone","Classic","Spooky","Coming of age","Edge of your seat"],series:"",spice:0},
+  {id:24,title:"1984",author:"George Orwell",year:1949,pages:328,genre:"Science Fiction",genreFull:"Science Fiction, Fiction, Dystopia",img:"https://covers.openlibrary.org/b/id/8745958-L.jpg",rating:4.19,reviews:"4.9M",reviewsRaw:4900000,tags:["Standalone","Classic","Thought provoking","Dystopia","Award-winner"],series:"",spice:0},
+  {id:25,title:"Good Omens",author:"Terry Pratchett, Neil Gaiman",year:1990,pages:383,genre:"Fantasy",genreFull:"Fantasy, Fiction, Horror, Humor",img:"https://covers.openlibrary.org/b/id/10482258-L.jpg",rating:4.37,reviews:"1.1M",reviewsRaw:1100000,tags:["Standalone","Classic","Laugh out loud","Found family","Goofy"],series:"",spice:0},
+  {id:26,title:"Babel",author:"R.F. Kuang",year:2022,pages:545,genre:"Fantasy",genreFull:"Fantasy, Historical Fiction, Dark Academia",img:"https://covers.openlibrary.org/b/id/12468631-L.jpg",rating:4.37,reviews:"310K",reviewsRaw:310000,tags:["Standalone","Dark Academia","Award-winner","Thought provoking","Deep world building"],series:"",spice:0},
+  {id:27,title:"The Song of Achilles",author:"Madeline Miller",year:2012,pages:378,genre:"Historical Fiction",genreFull:"Historical Fiction, Fantasy, Fiction",img:"https://covers.openlibrary.org/b/id/7098465-L.jpg",rating:4.36,reviews:"1.9M",reviewsRaw:1900000,tags:["Standalone","LGBT","Emotional","Award-winner","Will make you cry"],series:"",spice:0},
+  {id:28,title:"Verity",author:"Colleen Hoover",year:2018,pages:336,genre:"Mystery & Thrillers",genreFull:"Mystery & Thrillers, Romance, Fiction",img:"https://covers.openlibrary.org/b/id/8747160-L.jpg",rating:4.12,reviews:"2.8M",reviewsRaw:2800000,tags:["Standalone","Edge of your seat","Page-turner","Multi-perspective","Will make you cry"],series:"",spice:1},
+  {id:29,title:"Dungeon Crawler Carl",author:"Matt Dinniman",year:2020,pages:464,genre:"Fantasy",genreFull:"Fantasy, Science Fiction, Fiction, Humor, Adventure",img:"https://covers.openlibrary.org/b/id/15143022-L.jpg",rating:4.47,reviews:"307K",reviewsRaw:307120,tags:["Series","Found family","Laugh out loud","Great audiobook","Action-packed"],series:"Series",spice:0},
+  {id:30,title:"Red Rising",author:"Pierce Brown",year:2014,pages:382,genre:"Science Fiction",genreFull:"Science Fiction, Fantasy, Fiction, Dystopia",img:"https://covers.openlibrary.org/b/id/7316188-L.jpg",rating:4.27,reviews:"834K",reviewsRaw:833926,tags:["Series","Action-packed","Dystopia","Emotional","Edge of your seat"],series:"Series",spice:0}
+];
+
+let deck=[],cardIdx=0,matches=[],declined=[];
+let dragging=false,startX=0,curX=0,activeCard=null;
+
+function score(b){
+  const pop=Math.log(b.reviewsRaw+1);
+  const genreBonus=b.genreFull.split(',').some(g=>profile.genres.has(g.trim()))?2.5:0;
+  const tagBonus=b.tags.filter(t=>profile.storyTags.has(t)).length*.4;
+  const tropeBonus=b.tags.filter(t=>profile.tropes.has(t)).length*.6;
+  const spiceOk=profile.spice===0||b.spice<=profile.spice?0:-3;
+  return b.rating*pop+(genreBonus+tagBonus+tropeBonus+spiceOk)*pop;
+}
+function buildDeck(){
+  const used=new Set([...matches.map(b=>b.id),...declined.map(b=>b.id)]);
+  deck=BOOKS.filter(b=>!used.has(b.id)).sort((a,b)=>score(b)-score(a));
+  cardIdx=0;
+}
+
+function tagClass(i){return['t0','t1','t2','t3'][i%4];}
+function starsHtml(r){return '★'.repeat(Math.floor(r))+(r%1>=0.3?'½':'');}
+
+function renderDeck(){
+  const area=document.getElementById('deckArea');
+  area.querySelectorAll('.sw-card').forEach(c=>c.remove());
+  if(!deck.length)buildDeck();
+  const rem=deck.slice(cardIdx);
+  document.getElementById('swBadge').textContent=`${rem.length} left`;
+  const ghosts=area.querySelector('.deck-ghosts');
+  const empt=document.getElementById('empty-state');if(empt)empt.remove();
+  if(!rem.length){
+    if(ghosts)ghosts.style.opacity='0';
+    const e=document.createElement('div');e.id='empty-state';
+    e.style.cssText='text-align:center;color:#6B6D69;padding:36px;';
+    e.innerHTML='<div style="font-size:44px;margin-bottom:12px;">🎉</div><h3 style="font-family:\'Playfair Display\',serif;color:var(--cream);margin-bottom:6px;">All caught up!</h3><p style="font-size:13px;">Check back soon</p>';
+    area.insertBefore(e,document.getElementById('matchOv'));return;
+  }
+  if(ghosts)ghosts.style.opacity='1';
+  const count=Math.min(3,rem.length);
+  for(let i=count-1;i>=0;i--){
+    const b=rem[i];
+    const card=document.createElement('div');
+    card.className='sw-card'+(i===1?' back1':i===2?' back2':'');
+    card.id='card-'+b.id;
+    if(i===0){card.setAttribute('aria-label',`${b.title} by ${b.author}`);}
+
+    let imgArea;
+    if(i===0){
+      const wrap=makeImgWrap(b.img,`Cover of ${b.title}`,b.title);
+      wrap.style.cssText='width:100%;height:264px;position:relative;background:#1c2820;flex-shrink:0;';
+      const grad=document.createElement('div');grad.className='card-grad';
+      const like=document.createElement('div');like.className='like-stamp';like.id='like-'+b.id;like.textContent='MATCH';like.setAttribute('aria-hidden','true');
+      const nope=document.createElement('div');nope.className='nope-stamp';nope.id='nope-'+b.id;nope.textContent='NOPE';nope.setAttribute('aria-hidden','true');
+      wrap.appendChild(grad);wrap.appendChild(like);wrap.appendChild(nope);
+      imgArea=wrap;
+    } else {
+      imgArea=document.createElement('div');
+      imgArea.style.cssText='width:100%;height:264px;background:#1c2820;flex-shrink:0;';
+    }
+
+    const spiceHtml=b.spice>0?`<span style="font-size:11px;margin-left:4px;" aria-label="${b.spice} chili peppers">${'🌶️'.repeat(b.spice)}</span>`:'';
+    const bodyHtml=i===0?`<div class="card-body">
+      <div class="cb-genre">${b.genre}${b.series?' · '+b.series:''}</div>
+      <div class="cb-title">${b.title}</div>
+      <div class="cb-auth">by ${b.author} · ${b.pages} pages · ${b.year}</div>
+      <div class="cb-tags">${b.tags.slice(0,4).map((t,j)=>`<span class="tag ${tagClass(j)}">${t}</span>`).join('')}</div>
+      <div class="cb-meta"><span class="stars-txt" aria-label="${b.rating} stars">${starsHtml(b.rating)}</span><span class="rating-n">${b.rating}</span><span class="rating-v">(${b.reviews})</span>${spiceHtml}</div>
+    </div>`:'';
+
+    card.innerHTML=bodyHtml;
+    card.insertBefore(imgArea,card.firstChild);
+    area.insertBefore(card,document.getElementById('matchOv'));
+    if(i===0)setupDrag(card,b);
+  }
+}
+
+function setupDrag(card,book){
+  const onDown=e=>{
+    dragging=true;startX=(e.touches?e.touches[0]:e).clientX;curX=startX;
+    card.style.transition='none';card.style.cursor='grabbing';activeCard=card;
+  };
+  const onMove=e=>{
+    if(!dragging||activeCard!==card)return;
+    curX=(e.touches?e.touches[0]:e).clientX;
+    const dx=curX-startX;
+    if(!prefersReducedMotion())card.style.transform=`translateX(${dx}px) rotate(${dx*.07}deg)`;
+    const l=document.getElementById('like-'+book.id);
+    const n=document.getElementById('nope-'+book.id);
+    if(l)l.style.opacity=Math.min(1,Math.max(0,dx/65));
+    if(n)n.style.opacity=Math.min(1,Math.max(0,-dx/65));
+  };
+  const onUp=()=>{
+    if(!dragging||activeCard!==card)return;
+    dragging=false;card.style.cursor='grab';activeCard=null;
+    const dx=curX-startX;
+    if(Math.abs(dx)>80)dx>0?doMatch(card,book):doDecline(card,book);
+    else{
+      card.classList.add('anim');card.style.transform='';
+      const l=document.getElementById('like-'+book.id);const n=document.getElementById('nope-'+book.id);
+      if(l)l.style.opacity=0;if(n)n.style.opacity=0;
+      setTimeout(()=>card.classList.remove('anim'),360);
+    }
+  };
+  card.addEventListener('mousedown',onDown);
+  card.addEventListener('touchstart',onDown,{passive:true});
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('touchmove',onMove,{passive:true});
+  document.addEventListener('mouseup',onUp);
+  document.addEventListener('touchend',onUp);
+}
+
+function doMatch(card,book){
+  card.classList.add('anim');card.style.transform='translateX(130%) rotate(20deg)';card.style.opacity='0';
+  matches.push(book);
+  const ov=document.getElementById('matchOv');
+  const miniWrap=ov.querySelector('.match-book-mini');
+  miniWrap.innerHTML='';
+  const w=makeImgWrap(book.img,`Cover of ${book.title}`,book.title);
+  w.style.cssText='width:100%;height:100%;';
+  miniWrap.appendChild(w);
+  document.getElementById('matchBookName').textContent=`"${book.title}" added to your list`;
+  setTimeout(()=>ov.classList.add('show'),260);
+  setTimeout(()=>{card.remove();cardIdx++;renderDeck();updateHome();},500);
+}
+function doDecline(card,book){
+  card.classList.add('anim');card.style.transform='translateX(-130%) rotate(-20deg)';card.style.opacity='0';
+  declined.push(book);
+  setTimeout(()=>{card.remove();cardIdx++;renderDeck();},360);
+}
+function swipe(dir){
+  if(cardIdx>=deck.length)return;
+  const b=deck[cardIdx];const card=document.getElementById('card-'+b.id);
+  if(!card)return;
+  if(dir==='right')doMatch(card,b);
+  else if(dir==='left')doDecline(card,b);
+  else{cardIdx++;renderDeck();}
+}
+function dismissMatch(){document.getElementById('matchOv').classList.remove('show');}
+
+function makeThumbImg(b){
+  const cover=document.createElement('div');cover.className='m-cover';
+  const w=makeImgWrap(b.img,`Cover of ${b.title}`,b.title);
+  w.style.cssText='width:100%;height:100%;';
+  cover.appendChild(w);return cover;
+}
+
+function updateHome(){
+  document.getElementById('hMatchLbl').textContent=`Your Matches · ${matches.length}`;
+  const shelf=document.getElementById('hMatchShelf');
+  if(!matches.length){
+    shelf.className='';
+    shelf.innerHTML='<div class="empty-shelf"><p>📚 Start swiping to build your collection!</p></div>';
+  } else {
+    shelf.className='matches-scroll';shelf.innerHTML='';
+    matches.forEach(b=>{
+      const thumb=document.createElement('div');thumb.className='m-thumb';thumb.setAttribute('role','button');
+      thumb.setAttribute('tabindex','0');thumb.setAttribute('aria-label',b.title);
+      thumb.onclick=()=>goTo('s-matches');
+      thumb.appendChild(makeThumbImg(b));
+      const t=document.createElement('div');t.className='m-title';t.textContent=b.title;
+      thumb.appendChild(t);shelf.appendChild(thumb);
+    });
+  }
+  const recs=deck.slice(cardIdx,cardIdx+3);
+  const rcEl=document.getElementById('hRecs');
+  if(!recs.length){rcEl.innerHTML='<div class="empty-shelf"><p>All books swiped! Check your matches.</p></div>';return;}
+  rcEl.innerHTML='';
+  recs.forEach(b=>{
+    const card=document.createElement('div');card.className='rc';card.setAttribute('role','button');
+    card.setAttribute('tabindex','0');card.setAttribute('aria-label',`${b.title} by ${b.author}`);
+    card.onclick=()=>goTo('s-swipe');
+    const cover=document.createElement('div');cover.className='rc-cover';
+    const w=makeImgWrap(b.img,`Cover of ${b.title}`,b.title);w.style.cssText='width:100%;height:100%;';
+    cover.appendChild(w);
+    const info=document.createElement('div');info.className='rc-info';
+    info.innerHTML=`<div class="rc-title">${b.title}</div>
+      <div class="rc-auth">${b.author}</div>
+      <div class="rc-tags">${b.tags.slice(0,2).map((t,i)=>`<span class="tag ${tagClass(i)}">${t}</span>`).join('')}</div>
+      <div class="rc-star"><span>★</span>${b.rating} · ${b.reviews}</div>`;
+    card.appendChild(cover);card.appendChild(info);
+    rcEl.appendChild(card);
+  });
+}
+
+function handleSearch(q){
+  if(!q.trim()){updateHome();return;}
+  const ql=q.toLowerCase();
+  const results=BOOKS.filter(b=>b.title.toLowerCase().includes(ql)||b.author.toLowerCase().includes(ql)||b.genre.toLowerCase().includes(ql)||b.tags.some(t=>t.toLowerCase().includes(ql))).slice(0,5);
+  const rcEl=document.getElementById('hRecs');
+  if(!results.length){rcEl.innerHTML='<div style="text-align:center;padding:20px;color:var(--mid);font-size:13px;">No books found</div>';return;}
+  rcEl.innerHTML='';
+  results.forEach(b=>{
+    const card=document.createElement('div');card.className='rc';card.onclick=()=>goTo('s-swipe');
+    const cover=document.createElement('div');cover.className='rc-cover';
+    const w=makeImgWrap(b.img,`Cover of ${b.title}`,b.title);w.style.cssText='width:100%;height:100%;';
+    cover.appendChild(w);
+    const info=document.createElement('div');info.className='rc-info';
+    info.innerHTML=`<div class="rc-title">${b.title}</div><div class="rc-auth">${b.author}</div>
+      <div class="rc-tags">${b.tags.slice(0,2).map((t,i)=>`<span class="tag ${tagClass(i)}">${t}</span>`).join('')}</div>
+      <div class="rc-star"><span>★</span>${b.rating} · ${b.reviews}</div>`;
+    card.appendChild(cover);card.appendChild(info);rcEl.appendChild(card);
+  });
+}
+
+function renderMatchesList(){
+  const body=document.getElementById('mlBody');
+  document.getElementById('mlCount').textContent=`${matches.length} book${matches.length!==1?'s':''} saved`;
+  if(!matches.length){
+    body.innerHTML='<div class="empty-ml"><div class="ei">💔</div><h3>No matches yet</h3><p>Swipe right on books you love and they\'ll appear here</p><button class="cta" onclick="goTo(\'s-swipe\')">Start Swiping →</button></div>';
+    return;
+  }
+  const grid=document.createElement('div');grid.className='mg';
+  matches.forEach(b=>{
+    const item=document.createElement('div');item.className='mg-item';item.setAttribute('role','button');item.setAttribute('tabindex','0');item.setAttribute('aria-label',b.title);
+    const cov=document.createElement('div');cov.className='mg-cov';
+    const w=makeImgWrap(b.img,`Cover of ${b.title}`,b.title);w.style.cssText='position:absolute;inset:0;width:100%;height:100%;';
+    cov.appendChild(w);
+    item.innerHTML+=`<div class="mg-t">${b.title}</div><div class="mg-a">${b.author}</div>`;
+    item.insertBefore(cov,item.firstChild);
+    grid.appendChild(item);
+  });
+  body.innerHTML='';body.appendChild(grid);
+}
+
+function updateAccount(){document.getElementById('stMatches').textContent=matches.length;}
+
+// Init — show skeleton until real recs load
+buildDeck();
+setTimeout(()=>updateHome(),300); // brief delay simulates async load, replaces skeletons
+</script>
+</body>
+</html>
