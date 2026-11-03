@@ -65,6 +65,29 @@ The prototype (`index.html`) is still one self-contained file, so it stays easy 
 - **The review quotes are sample content.** The modules are labelled "· sample". See the data warning in §3.
 - **Formats aren't used in matching yet.** The data has no edition or format information, so the format answer is collected but doesn't affect results.
 
+### v3 restyle: the "soft" design system (now in `index.html`)
+- **Discover is a Hinge-style profile feed, not a card stack.** Each book is one scrolling profile: cover, plot one-liner, vibes, quote, a reader snippet, the author.
+  - Every section has its own ♡, and you can tap individual vibe tags. Hearting a section opens "Add to your shelf?", with an optional note to future you.
+  - We record *what* was liked (`liked`, `likedTags`), and the next books are ranked using those vibes.
+  - Double-tap the cover to like it. "Not for me ✕" sits bottom-left. "Already read" and "Ask me later" live in the ••• menu.
+- **Match moment:** the book cover, a mascot (Bibi the book), confetti in brand colours, and "Because you loved the vibe ♡".
+- **Tokens:**
+  - cream canvas `#FBF7F2`, white cards, 28px radii, soft shadows;
+  - rose `#c7a9b5` for love and sage `#7F9D98` for calm (darker "ink" versions where they're used as text);
+  - green `#313C33` for primary actions.
+- **Type:** Fraunces for display, Nunito for UI.
+- **Icons:** Phosphor (MIT licence), inlined as SVG. In React Native, use `phosphor-react-native`.
+- **Book cover component:** every cover, at every size, renders the same way:
+  - a fixed 2:3 frame, so images never shift the layout;
+  - a spine highlight, a hairline edge and layered shadow, so it reads as a physical book;
+  - a shimmer while loading;
+  - if an image fails, is missing, or is a tiny "no cover" placeholder, a designed typographic cover takes its place in brand colours;
+  - large covers sit on a "stage" tinted with the cover's own average colour, mixed with cream so every backdrop stays soft.
+
+  In production, compute the tint and a blurhash once at ingest time and store them on `books`. Serve covers from your own CDN at 1×/2×/3× widths.
+- **Home:** Stories-style genre rings, "Your shelf", Trending (ranked), and Top in [genre] rows.
+- **Navigation:** signed-in readers land on **Discover**, not Home.
+
 ---
 
 ## 2. How I'd build the production app
