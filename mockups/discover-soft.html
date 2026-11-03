@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#FBF7F2">
+<title>Biblio Discover</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── Biblio "soft" theme: cream canvas, white cards, rose for love, sage for calm ── */
+:root{
+  --bg:#FBF7F2; --card:#FFFFFF; --ink:#2C292C; --muted:#6B6D69; --line:rgba(44,41,44,.08);
+  --green:#313C33; --sage:#7F9D98; --sage-ink:#3F6863; --sage-soft:#E7EFED;
+  --rose:#c7a9b5; --rose-ink:#9B5872; --rose-soft:#F6EBF0;
+  --blue:#5C7EA0; --blue-ink:#2F5579; --blue-soft:#E6EDF5;
+  --olive:#555B3F; --olive-soft:#EEEFE4;
+  --pepper:#C2563E; --star:#C98A1B;
+  --r-lg:28px; --r-md:20px;
+  --shadow:0 1px 2px rgba(44,41,44,.04),0 8px 24px rgba(44,41,44,.07);
+  --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:#E9E3DA;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer;}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:12px;}
+.ic{width:1em;height:1em;display:inline-block;vertical-align:-.125em;fill:currentColor;flex-shrink:0;}
+
+.phone{width:390px;height:min(844px,calc(100vh - 32px));background:var(--bg);border-radius:46px;overflow:hidden;position:relative;
+  box-shadow:0 40px 120px rgba(49,60,51,.35),0 0 0 10px #fff,0 0 0 11px rgba(0,0,0,.06);display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;}
+@media (max-width:500px){body{display:block;background:var(--bg);}.phone{width:100vw;height:100vh;height:100dvh;border-radius:0;box-shadow:none;}}
+
+/* ── Top bar ── */
+.top{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--safe-top) + 44px) 18px 8px 22px;flex-shrink:0;}
+.wordmark{font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:28px;color:var(--green);letter-spacing:-.01em;}
+.wordmark i{color:var(--rose);font-style:normal;}
+.top-actions{display:flex;gap:6px;align-items:center;}
+.chip-btn{height:40px;min-width:40px;border-radius:20px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;gap:6px;font-size:20px;color:var(--green);padding:0 10px;transition:transform .15s;}
+.chip-btn:active{transform:scale(.92);}
+.chip-btn:disabled{opacity:.35;}
+.chip-btn .n{font-size:13px;font-weight:800;}
+.shelf-btn.bump{animation:bump .5s ease;}
+@keyframes bump{30%{transform:scale(1.25)}60%{transform:scale(.95)}}
+
+/* ── Feed ── */
+.feed-wrap{flex:1;min-height:0;position:relative;overflow:hidden;}
+.feed{position:absolute;inset:0;overflow-y:auto;padding:4px 16px 120px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.feed::-webkit-scrollbar{display:none;}
+.feed.out-left{animation:outLeft .32s ease forwards;}
+.feed.in-right{animation:inRight .38s cubic-bezier(.2,.8,.2,1);}
+.feed.in-left{animation:inLeft .38s cubic-bezier(.2,.8,.2,1);}
+@keyframes outLeft{to{transform:translateX(-40px) rotate(-2deg);opacity:0}}
+@keyframes inRight{from{transform:translateX(40px);opacity:0}}
+@keyframes inLeft{from{transform:translateX(-40px);opacity:0}}
+
+.p-head{padding:6px 6px 14px;position:relative;}
+.kicker{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--rose-ink);background:var(--rose-soft);border-radius:20px;padding:5px 11px;margin-bottom:10px;}
+.p-head h1{font-family:'Fraunces',serif;font-weight:600;font-size:34px;line-height:1.05;letter-spacing:-.02em;color:var(--green);margin-bottom:4px;padding-right:48px;}
+.by{font-size:15px;color:var(--muted);font-weight:600;margin-bottom:12px;}
+.facts{display:flex;flex-wrap:wrap;gap:6px;}
+.fact{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:var(--ink);background:var(--card);border-radius:20px;padding:6px 11px;box-shadow:0 1px 2px rgba(44,41,44,.05);}
+.fact .ic{font-size:14px;}
+.fact.star .ic{color:var(--star);}
+.fact.spice .ic{color:var(--pepper);}
+.more{position:absolute;right:0;top:4px;width:44px;height:44px;border-radius:50%;font-size:22px;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+.menu{position:absolute;right:4px;top:48px;background:var(--card);border-radius:16px;box-shadow:0 12px 40px rgba(44,41,44,.18);padding:6px;z-index:20;display:none;min-width:190px;}
+.menu.show{display:block;animation:pop .2s ease;}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;padding:12px;border-radius:10px;font-size:14px;font-weight:700;text-align:left;}
+.menu button:hover{background:var(--bg);}
+.menu .ic{font-size:18px;color:var(--sage-ink);}
+
+/* Modules: every one is a white rounded card with its own heart */
+.m{position:relative;background:var(--card);border-radius:var(--r-lg);box-shadow:var(--shadow);margin-bottom:14px;}
+.m-lbl{font-size:12px;font-weight:800;color:var(--sage-ink);letter-spacing:.02em;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.m-lbl .ic{font-size:15px;}
+.like{position:absolute;right:14px;bottom:14px;width:48px;height:48px;border-radius:50%;background:var(--card);box-shadow:0 2px 6px rgba(44,41,44,.08),0 6px 18px rgba(44,41,44,.12);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--rose-ink);transition:transform .15s;z-index:3;}
+.like:active{transform:scale(.88);}
+.like:hover{background:var(--rose-soft);}
+
+.cover-card{padding:0;overflow:hidden;aspect-ratio:4/4.6;}
+.cover-bg{position:absolute;inset:-20px;background-size:cover;background-position:center;filter:blur(26px) saturate(1.2);opacity:.55;transform:scale(1.1);}
+.cover-tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(251,247,242,.1),rgba(251,247,242,.5));}
+.cover-book{position:absolute;left:50%;top:50%;width:54%;aspect-ratio:2/3;transform:translate(-50%,-52%) rotate(-2deg);border-radius:6px 12px 12px 6px;overflow:hidden;
+  box-shadow:-6px 0 0 -2px rgba(0,0,0,.08) inset,0 18px 40px rgba(44,41,44,.32),0 2px 6px rgba(44,41,44,.2);}
+.cover-book img{width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none;}
+.cover-fallback{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:18px 14px;color:#fff;}
+.cover-fallback .t{font-family:'Fraunces',serif;font-weight:600;font-size:21px;line-height:1.1;}
+.cover-fallback .a{font-size:11px;font-weight:700;opacity:.9;letter-spacing:.04em;text-transform:uppercase;}
+.cover-hint{position:absolute;left:16px;bottom:22px;font-size:11px;font-weight:700;color:var(--green);background:rgba(255,255,255,.75);backdrop-filter:blur(6px);border-radius:20px;padding:5px 10px;z-index:2;}
+.burst{position:absolute;left:50%;top:50%;font-size:110px;color:#fff;transform:translate(-50%,-50%) scale(0);opacity:0;pointer-events:none;z-index:4;filter:drop-shadow(0 6px 20px rgba(155,88,114,.5));}
+.burst.go{animation:burst .8s ease forwards;}
+@keyframes burst{15%{transform:translate(-50%,-50%) scale(1.15);opacity:1}30%{transform:translate(-50%,-50%) scale(.95)}45%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-60%) scale(1);opacity:0}}
+
+.prompt{padding:20px 20px 74px;}
+.prompt .big{font-family:'Fraunces',serif;font-size:25px;line-height:1.22;font-weight:500;color:var(--green);letter-spacing:-.01em;}
+.prompt.rose{background:var(--rose-soft);}
+.prompt.rose .m-lbl{color:var(--rose-ink);}
+.prompt.quote .big{font-style:italic;font-size:22px;}
+.prompt.quote .qmark{font-family:'Fraunces',serif;font-size:64px;line-height:.6;color:var(--rose);display:block;height:26px;}
+
+.vibes{padding:20px 20px 74px;}
+.vibe-row{display:flex;flex-wrap:wrap;gap:8px;}
+.vibe{font-size:14px;font-weight:700;border-radius:22px;padding:9px 14px;display:inline-flex;align-items:center;gap:6px;transition:transform .15s,box-shadow .15s;}
+.vibe:active{transform:scale(.95);}
+.vibe[aria-pressed="true"]{box-shadow:0 0 0 2px currentColor inset;}
+.vibe .ic{font-size:14px;display:none;}
+.vibe[aria-pressed="true"] .ic{display:inline-block;}
+.v0{background:var(--sage-soft);color:var(--sage-ink);} .v1{background:var(--rose-soft);color:var(--rose-ink);}
+.v2{background:var(--blue-soft);color:var(--blue-ink);} .v3{background:var(--olive-soft);color:var(--olive);}
+.vibe-tip{font-size:12px;color:var(--muted);margin-top:10px;font-weight:600;}
+
+.review{padding:20px 20px 74px;}
+.bubble{background:var(--bg);border-radius:20px 20px 20px 6px;padding:14px 16px;font-size:15.5px;line-height:1.45;font-weight:600;}
+.who{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--muted);font-weight:700;}
+.who .dot{width:26px;height:26px;border-radius:50%;background:var(--blue-soft);color:var(--blue-ink);display:flex;align-items:center;justify-content:center;font-size:13px;}
+.sample{font-size:10px;font-weight:800;color:var(--muted);background:var(--bg);border-radius:10px;padding:2px 7px;margin-left:auto;}
+
+.author{padding:20px;display:flex;gap:14px;}
+.author .av{width:52px;height:52px;border-radius:50%;background:var(--sage-soft);color:var(--sage-ink);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:22px;font-weight:600;flex-shrink:0;}
+.author h3{font-family:'Fraunces',serif;font-weight:600;font-size:18px;color:var(--green);margin-bottom:4px;}
+.author p{font-size:13.5px;line-height:1.5;color:var(--muted);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+.author p.open{-webkit-line-clamp:unset;}
+.author .rm{font-size:13px;font-weight:800;color:var(--sage-ink);margin-top:6px;padding:6px 0;}
+.feed-end{text-align:center;font-size:13px;color:var(--muted);font-weight:700;padding:10px 0 20px;}
+
+/* ── Pass FAB (Hinge-style, bottom-left) ── */
+.pass{position:absolute;left:18px;bottom:96px;z-index:30;width:62px;height:62px;border-radius:50%;background:var(--card);
+  box-shadow:0 2px 6px rgba(44,41,44,.1),0 10px 28px rgba(44,41,44,.18);font-size:28px;color:var(--ink);display:flex;align-items:center;justify-content:center;transition:transform .15s;}
+.pass:active{transform:scale(.9) rotate(-8deg);}
+.pass-lbl{position:absolute;left:18px;width:62px;bottom:80px;text-align:center;font-size:10.5px;font-weight:800;color:var(--muted);z-index:30;}
+
+/* ── Nav ── */
+.nav{display:flex;justify-content:space-around;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:8px 10px calc(var(--safe-bot) + 14px);flex-shrink:0;position:relative;z-index:40;}
+.ni{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:72px;min-height:48px;padding-top:4px;font-size:11px;font-weight:800;color:var(--muted);}
+.ni .ic{font-size:26px;}
+.ni[aria-current="page"]{color:var(--green);}
+.ni[aria-current="page"] .pip{width:5px;height:5px;border-radius:50%;background:var(--rose);margin-top:1px;}
+
+/* ── Like sheet (Hinge's "like + comment") ── */
+.scrim{position:absolute;inset:0;background:rgba(44,41,44,.32);backdrop-filter:blur(2px);z-index:50;opacity:0;pointer-events:none;transition:opacity .25s;}
+.scrim.show{opacity:1;pointer-events:auto;}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:60;background:var(--bg);border-radius:30px 30px 0 0;padding:10px 20px calc(var(--safe-bot) + 22px);transform:translateY(105%);transition:transform .34s cubic-bezier(.2,.8,.2,1);visibility:hidden;}
+.sheet.show{transform:none;visibility:visible;}
+.grab{width:40px;height:5px;border-radius:3px;background:rgba(44,41,44,.15);margin:0 auto 14px;}
+.sheet h2{font-family:'Fraunces',serif;font-weight:600;font-size:24px;color:var(--green);line-height:1.15;margin-bottom:4px;}
+.sheet .sub{font-size:14px;color:var(--muted);font-weight:600;margin-bottom:14px;}
+.liked-preview{background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:var(--shadow);margin-bottom:12px;display:flex;gap:12px;align-items:center;}
+.liked-preview .lp-ic{width:40px;height:40px;border-radius:50%;background:var(--rose-soft);color:var(--rose-ink);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.liked-preview .lp-t{font-size:12px;font-weight:800;color:var(--rose-ink);}
+.liked-preview .lp-b{font-family:'Fraunces',serif;font-size:16px;color:var(--green);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.note{width:100%;min-height:48px;border-radius:16px;border:1.5px solid var(--line);background:var(--card);padding:12px 14px;font-family:inherit;font-size:15px;color:var(--ink);outline:none;margin-bottom:14px;user-select:text;-webkit-user-select:text;}
+.note:focus{border-color:var(--rose);}
+.btn{width:100%;min-height:52px;border-radius:26px;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s;}
+.btn:active{transform:scale(.97);}
+.btn-rose{background:var(--green);color:#fff;}
+.btn-rose .ic{color:var(--rose);font-size:20px;}
+.btn-quiet{color:var(--muted);margin-top:4px;min-height:44px;font-size:14px;}
+
+/* ── Match moment ── */
+.moment{position:absolute;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;opacity:0;pointer-events:none;transition:opacity .25s;overflow:hidden;}
+.moment.show{opacity:1;pointer-events:auto;}
+.duo{display:flex;align-items:flex-end;gap:0;margin-bottom:22px;position:relative;}
+.duo .mini{width:96px;aspect-ratio:2/3;border-radius:6px 12px 12px 6px;overflow:hidden;box-shadow:0 14px 30px rgba(44,41,44,.25);transform:rotate(6deg) translateX(-8px);position:relative;background:var(--sage);}
+.duo .mini img{width:100%;height:100%;object-fit:cover;}
+.mascot{width:120px;height:120px;transform:translateX(10px);}
+.moment.show .mascot .bob{animation:bob 1.2s ease-in-out infinite;transform-origin:60px 100px;}
+.moment.show .duo{animation:pop .5s cubic-bezier(.2,1.4,.4,1);}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)}}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.moment h2{font-family:'Fraunces',serif;font-weight:600;font-size:32px;color:var(--green);letter-spacing:-.02em;margin-bottom:8px;}
+.moment p{font-size:15px;color:var(--muted);font-weight:600;line-height:1.5;margin-bottom:6px;max-width:280px;}
+.moment .why{font-size:13px;color:var(--rose-ink);font-weight:800;margin-bottom:26px;}
+.moment .btn{max-width:280px;}
+.confetti{position:absolute;top:-20px;width:10px;height:14px;border-radius:3px;opacity:0;}
+.moment.show .confetti{animation:fall 2.4s cubic-bezier(.3,.6,.4,1) forwards;}
+@keyframes fall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(var(--dy)) translateX(var(--dx)) rotate(var(--rot))}}
+
+.toast{position:absolute;left:50%;bottom:104px;transform:translate(-50%,16px);background:var(--green);color:#fff;font-size:13.5px;font-weight:700;border-radius:22px;padding:11px 16px;z-index:90;opacity:0;pointer-events:none;transition:.25s;white-space:nowrap;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+
+.coach{position:absolute;left:96px;right:14px;bottom:92px;z-index:45;background:var(--green);color:#fff;border-radius:20px;padding:14px 16px;font-size:13.5px;font-weight:600;line-height:1.45;box-shadow:0 12px 30px rgba(49,60,51,.35);display:flex;gap:12px;align-items:flex-start;}
+.coach .ic{font-size:22px;color:var(--rose);margin-top:1px;}
+.coach button{color:var(--rose);font-weight:800;font-size:13px;margin-left:auto;padding:4px 2px;white-space:nowrap;}
+
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+<div class="phone" id="app">
+  <header class="top">
+    <div class="wordmark" aria-label="Biblio">biblio<i>.</i></div>
+    <div class="top-actions">
+      <button class="chip-btn" id="undoBtn" aria-label="Undo" disabled data-ic="arrow-counter-clockwise"></button>
+      <button class="chip-btn" aria-label="Filters and spoiler settings" data-ic="sliders-horizontal"></button>
+      <button class="chip-btn shelf-btn" id="shelfBtn" aria-label="Your shelf, 0 books"><span data-ic="bookmark-simple"></span><span class="n" id="shelfN">0</span></button>
+    </div>
+  </header>
+
+  <div class="coach" id="coach" role="note">
+    <span data-ic="heart-fill"></span>
+    <span>Tap the <b>heart</b> on whatever catches your eye (the plot, a vibe, a quote) to add the book to your shelf. Double-tap the cover works too.</span>
+    <button id="coachOk">Got it</button>
+  </div>
+
+  <div class="feed-wrap"><main class="feed" id="feed" aria-live="polite"></main></div>
+
+  <button class="pass" id="passBtn" aria-label="Not for me, show the next book" data-ic="x"></button>
+  <div class="pass-lbl" aria-hidden="true">Not for me</div>
+
+  <nav class="nav" aria-label="Main">
+    <button class="ni"><span data-ic="house"></span>Home</button>
+    <button class="ni" aria-current="page"><span data-ic="cards-fill"></span>Discover<span class="pip"></span></button>
+    <button class="ni"><span data-ic="user-circle"></span>Me</button>
+  </nav>
+
+  <div class="scrim" id="scrim"></div>
+  <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT">
+    <div class="grab" aria-hidden="true"></div>
+    <h2 id="sheetT">Add to your shelf?</h2>
+    <div class="sub" id="sheetSub"></div>
+    <div class="liked-preview"><div class="lp-ic" data-ic="heart-fill"></div><div><div class="lp-t" id="lpT"></div><div class="lp-b" id="lpB"></div></div></div>
+    <input class="note" id="note" placeholder="Note to future you (optional)" aria-label="Note to future you" maxlength="120">
+    <button class="btn btn-rose" id="confirmBtn"><span data-ic="heart-fill"></span>Add to my shelf</button>
+    <button class="btn btn-quiet" id="cancelBtn">Keep browsing</button>
+  </section>
+
+  <section class="moment" id="moment" role="dialog" aria-modal="true" aria-labelledby="momentT">
+    <div class="duo">
+      <div class="mini" id="momentCover"></div>
+      <svg class="mascot" viewBox="0 0 120 120" aria-hidden="true">
+        <ellipse cx="60" cy="110" rx="30" ry="5" fill="#2C292C" opacity=".08"/>
+        <g class="bob">
+          <rect x="30" y="20" width="62" height="84" rx="12" fill="#7F9D98"/>
+          <rect x="30" y="20" width="12" height="84" rx="6" fill="#5F817C"/>
+          <rect x="84" y="20" width="8" height="84" rx="3" fill="#F3EEE6"/>
+          <path d="M70 14h10v26l-5-5-5 5z" fill="#c7a9b5"/>
+          <ellipse cx="56" cy="58" rx="3.6" ry="4.6" fill="#2C292C"/>
+          <ellipse cx="74" cy="58" rx="3.6" ry="4.6" fill="#2C292C"/>
+          <circle cx="57.2" cy="56.4" r="1.2" fill="#fff"/><circle cx="75.2" cy="56.4" r="1.2" fill="#fff"/>
+          <circle cx="50" cy="68" r="5" fill="#E9B9C8" opacity=".9"/><circle cx="80" cy="68" r="5" fill="#E9B9C8" opacity=".9"/>
+          <path d="M59 67q6 7 12 0" fill="none" stroke="#2C292C" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M24 46q-8 6-4 14" fill="none" stroke="#5F817C" stroke-width="4" stroke-linecap="round"/>
+          <path d="M98 46q10-4 12-14" fill="none" stroke="#5F817C" stroke-width="4" stroke-linecap="round"/>
+        </g>
+        <path d="M104 18l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#c7a9b5"/>
+        <path d="M16 28l1.5 3.5 3.5 1.5-3.5 1.5-1.5 3.5-1.5-3.5-3.5-1.5 3.5-1.5z" fill="#5C7EA0"/>
+      </svg>
+    </div>
+    <h2 id="momentT">On your shelf!</h2>
+    <p id="momentP"></p>
+    <div class="why" id="momentWhy"></div>
+    <button class="btn btn-rose" id="momentBtn">Keep browsing</button>
+  </section>
+
+  <div class="toast" id="toast" role="status"></div>
+</div>
+
+<script>
+"use strict";
+const ICONS={"arrow-counter-clockwise": "<path d=\"M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z\"/>", "book-open": "<path d=\"M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64Z\"/>", "bookmark-simple": "<path d=\"M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,177.57-51.77-32.35a8,8,0,0,0-8.48,0L72,209.57V48H184Z\"/>", "books": "<path d=\"M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15c0-.06,0-.09,0-.09l46.8-10,3.33,15.87L139.33,66Zm6.62,31.47,46.82-10.05,3.34,15.9L146,97.53Zm6.64,31.57,46.82-10.06,13.3,63.24-46.82,10.06ZM216,197.94l-46.8,10-3.33-15.87L212.67,182,216,197.85C216,197.91,216,197.94,216,197.94ZM104,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V48A16,16,0,0,0,104,32ZM56,48h48V64H56Zm0,32h48v96H56Zm48,128H56V192h48v16Z\"/>", "cards-fill": "<path d=\"M200,88V200a16,16,0,0,1-16,16H40a16,16,0,0,1-16-16V88A16,16,0,0,1,40,72H184A16,16,0,0,1,200,88Zm16-48H64a8,8,0,0,0,0,16H216V176a8,8,0,0,0,16,0V56A16,16,0,0,0,216,40Z\"/>", "chat-circle": "<path d=\"M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,1,0,128,24Zm0,192a87.87,87.87,0,0,1-44.06-11.81,8,8,0,0,0-6.54-.67L40,216,52.47,178.6a8,8,0,0,0-.66-6.54A88,88,0,1,1,128,216Z\"/>", "check-circle": "<path d=\"M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z\"/>", "clock": "<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z\"/>", "dots-three": "<path d=\"M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128Zm56-12a12,12,0,1,0,12,12A12,12,0,0,0,196,116ZM60,116a12,12,0,1,0,12,12A12,12,0,0,0,60,116Z\"/>", "feather": "<path d=\"M221.28,34.75a64,64,0,0,0-90.49,0L60.69,104A15.9,15.9,0,0,0,56,115.31v73.38L26.34,218.34a8,8,0,0,0,11.32,11.32L67.32,200H140.7A15.92,15.92,0,0,0,152,195.32l0,0,69.23-70A64,64,0,0,0,221.28,34.75ZM142.07,46.06A48,48,0,0,1,211.79,112H155.33l34.35-34.34a8,8,0,0,0-11.32-11.32L120,124.69V67.87ZM72,115.35l32-31.67v57l-32,32ZM140.7,184H83.32l56-56h56.74Z\"/>", "heart": "<path d=\"M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z\"/>", "heart-fill": "<path d=\"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z\"/>", "house": "<path d=\"M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z\"/>", "pepper-fill": "<path d=\"M167.27,40.42A40.06,40.06,0,0,0,128,8a8,8,0,0,0,0,16,24,24,0,0,1,22.85,16.66A64.08,64.08,0,0,0,96,104c0,46.75-25.75,78-76.53,93a16,16,0,0,0,1.77,31.13A264.8,264.8,0,0,0,66.75,232c40.78,0,86.16-9.15,117.53-35.46C210.64,174.44,224,143.3,224,104h0A64.07,64.07,0,0,0,167.27,40.42ZM192,95,163.58,80.83a8,8,0,0,0-7.16,0L128,95l-13.37-6.68a48,48,0,0,1,90.74,0Z\"/>", "quotes": "<path d=\"M100,56H40A16,16,0,0,0,24,72v64a16,16,0,0,0,16,16h60v8a32,32,0,0,1-32,32,8,8,0,0,0,0,16,48.05,48.05,0,0,0,48-48V72A16,16,0,0,0,100,56Zm0,80H40V72h60ZM216,56H156a16,16,0,0,0-16,16v64a16,16,0,0,0,16,16h60v8a32,32,0,0,1-32,32,8,8,0,0,0,0,16,48.05,48.05,0,0,0,48-48V72A16,16,0,0,0,216,56Zm0,80H156V72h60Z\"/>", "sliders-horizontal": "<path d=\"M40,88H73a32,32,0,0,0,62,0h81a8,8,0,0,0,0-16H135a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16Zm64-24A16,16,0,1,1,88,80,16,16,0,0,1,104,64ZM216,168H199a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16h97a32,32,0,0,0,62,0h17a8,8,0,0,0,0-16Zm-48,24a16,16,0,1,1,16-16A16,16,0,0,1,168,192Z\"/>", "sparkle": "<path d=\"M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z\"/>", "sparkle-fill": "<path d=\"M208,144a15.78,15.78,0,0,1-10.42,14.94L146,178l-19,51.62a15.92,15.92,0,0,1-29.88,0L78,178l-51.62-19a15.92,15.92,0,0,1,0-29.88L78,110l19-51.62a15.92,15.92,0,0,1,29.88,0L146,110l51.62,19A15.78,15.78,0,0,1,208,144ZM152,48h16V64a8,8,0,0,0,16,0V48h16a8,8,0,0,0,0-16H184V16a8,8,0,0,0-16,0V32H152a8,8,0,0,0,0,16Zm88,32h-8V72a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0V96h8a8,8,0,0,0,0-16Z\"/>", "star-fill": "<path d=\"M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z\"/>", "user-circle": "<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM74.08,197.5a64,64,0,0,1,107.84,0,87.83,87.83,0,0,1-107.84,0ZM96,120a32,32,0,1,1,32,32A32,32,0,0,1,96,120Zm97.76,66.41a79.66,79.66,0,0,0-36.06-28.75,48,48,0,1,0-59.4,0,79.66,79.66,0,0,0-36.06,28.75,88,88,0,1,1,131.52,0Z\"/>", "x": "<path d=\"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z\"/>"};
+const BOOKS=[{"id":3,"title":"Fourth Wing","author":"Rebecca Yarros","year":2023,"pages":517,"genre":"Fantasy","genreFull":"Fantasy, Romance, Romantasy","img":"https://wsrv.nl/?url=covers.openlibrary.org/b/id/14407898-L.jpg&w=700&q=90&output=jpg","rating":4.57,"reviewsRaw":3670587,"tags":["Series","Enemies to lovers","Dragons","Action-packed","Reader Favorite"],"series":"Series","spice":2,"plot":"Girl survives dragon college entrance exam, immediately falls for enemy's very attractive son","opening":null,"quote":null,"review1":{"text":"I read this in two sittings and immediately ordered the sequel. No regrets.","source":"Goodreads review by @romanticfantasylover"},"aboutAuthor":"Rebecca Yarros is a hopeless romantic, coffee addict, and New York Times bestselling author of over twenty novels, including the record-breaking Fourth Wing and its sequels. She's the recipient of the Colorado Romance Writers' Award of Excellence and is beloved for her emotionally intense, dragon-filled worlds. A military spouse and mother of six, she lives in Colorado and is currently surviving the teenage years with all four of her hockey-playing sons."},{"id":36,"title":"The Way of Kings","author":"Brandon Sanderson","year":2010,"pages":1007,"genre":"Fantasy","genreFull":"Fantasy, Fiction","img":"https://wsrv.nl/?url=covers.openlibrary.org/b/id/14658316-L.jpg&w=700&q=90&output=jpg","rating":4.65,"reviewsRaw":720000,"tags":["Series","Deep world building","Interesting magic system","Lengthy read","Immersive"],"series":"Series","spice":0,"plot":"Man with magic armor, a surgeon turned soldier, and a female scholar all have very bad days in an extremely complicated world","opening":"Szeth-son-son-Vallano, Truthless of Shinovar, wore white on the day he was to kill a king.","quote":"The most important step a man can take. It's not the first one, is it? It's the next one. Always the next step.","review1":{"text":"The most ambitious fantasy novel I've ever read, and somehow it earns every single page.","source":"Goodreads review by @epicfantasy_devotee"},"aboutAuthor":"Brandon Sanderson is the #1 New York Times bestselling author of the Stormlight Archive, Mistborn series, and dozens of other fantasy novels, as well as the conclusion to Robert Jordan's Wheel of Time. Celebrated for his intricate magic systems and extraordinary world-building, he is one of the most prolific and beloved authors in epic fantasy. He lives in Utah."},{"id":99,"title":"Dungeon Crawler Carl","author":"Matt Dinniman","year":2020,"pages":464,"genre":"Fantasy","genreFull":"Fantasy, Science Fiction, Fiction, Humor, Adventure","img":"https://wsrv.nl/?url=covers.openlibrary.org/b/id/15143022-L.jpg&w=700&q=90&output=jpg","rating":4.47,"reviewsRaw":307120,"tags":["Series","Found family","Laugh out loud","Great audiobook","Action-packed"],"series":"Series","spice":0,"plot":"Man steals his ex-girlfriend's cat and competes in an alien game show","opening":null,"quote":null,"review1":{"text":"Hilarious, heartfelt, and somehow deeply moving. Dinniman is a genius of the genre.","source":"Goodreads review by @dungeoncrawlercarl_fan"},"aboutAuthor":"Matt Dinniman is the author of the Dungeon Crawler Carl series, which originated as a wildly popular web serial before becoming a bestselling book series. Known for his irreverent humor, breakneck pacing, and deeply emotional storytelling beneath the comedy, he has become one of the most beloved voices in LitRPG and progression fantasy. He lives in the Pacific Northwest."},{"id":95,"title":"The Song of Achilles","author":"Madeline Miller","year":2012,"pages":378,"genre":"Historical Fiction","genreFull":"Historical Fiction, Fantasy, Fiction","img":"https://wsrv.nl/?url=covers.openlibrary.org/b/id/7098465-L.jpg&w=700&q=90&output=jpg","rating":4.36,"reviewsRaw":1900000,"tags":["Standalone","LGBT","Emotional","Award-winner","Will make you cry"],"series":"Standalone","spice":0,"plot":null,"opening":null,"quote":"He is half of my soul, as the poets say.","review1":{"text":"One of the most beautiful love stories I've ever encountered. I wept for hours.","source":"Goodreads review by @songofachilles_fan"},"aboutAuthor":"Madeline Miller is the New York Times bestselling author of Circe and The Song of Achilles, both of which have become modern classics of mythological fiction. With a background in classics, she spent a decade writing The Song of Achilles, which won the Orange Prize for Fiction. She lives outside Philadelphia."},{"id":2,"title":"Sunrise on the Reaping","author":"Suzanne Collins","year":2025,"pages":439,"genre":"Fantasy","genreFull":"Fantasy, Young Adult, Fiction","img":"https://wsrv.nl/?url=covers.openlibrary.org/b/id/14847911-L.jpg&w=700&q=90&output=jpg","rating":4.5,"reviewsRaw":1128564,"tags":["Series","Coming of age","Thought provoking","Emotional","Dystopia"],"series":"Series","spice":0,"plot":"Turns out the hunger games were someone's idea of good television long before Katniss showed up","opening":null,"quote":null,"review1":{"text":"Collins proves she still owns this world completely. Haymitch's story broke me in the best way.","source":"Goodreads review by @hungerforbooks"},"aboutAuthor":"Suzanne Collins is the #1 New York Times bestselling author of The Hunger Games series, which has sold over 100 million copies worldwide and been adapted into a blockbuster film franchise. A former television writer, she drew on her father's military career and her lifelong interest in history and mythology to craft her dystopian worlds. She lives in Connecticut with her family."},{"id":100,"title":"Red Rising","author":"Pierce Brown","year":2014,"pages":382,"genre":"Science Fiction","genreFull":"Science Fiction, Fantasy, Fiction, Dystopia","img":"https://wsrv.nl/?url=covers.openlibrary.org/b/id/7316188-L.jpg&w=700&q=90&output=jpg","rating":4.27,"reviewsRaw":833926,"tags":["Series","Action-packed","Dystopia","Emotional","Edge of your seat"],"series":"Series","spice":0,"plot":"Miner boy infiltrates elite society to avenge his people and discovers society is genuinely terrible","opening":null,"quote":null,"review1":{"text":"One of the most gripping sci-fi epics I've ever read. Pierce Brown is ferociously talented.","source":"Goodreads review by @redrising_fan"},"aboutAuthor":"Pierce Brown is the New York Times bestselling author of the Red Rising saga, a science fiction epic that has sold millions of copies and earned comparisons to the greatest dystopian novels of all time. A California native, he broke out with his debut at age twenty-four and has continued to expand the world of Red Rising with prequels and sequels. He lives in Los Angeles."}];
+const ic=(n,label)=>`<svg class="ic" viewBox="0 0 256 256" ${label?`role="img" aria-label="${label}"`:'aria-hidden="true"'}>${ICONS[n]}</svg>`;
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);
+const hydrateIcons=root=>root.querySelectorAll('[data-ic]').forEach(el=>{el.insertAdjacentHTML('afterbegin',ic(el.dataset.ic));el.removeAttribute('data-ic');});
+hydrateIcons(document);
+
+const COVER_TINTS=[['#7F9D98','#4F7570'],['#c7a9b5','#9B5872'],['#5C7EA0','#2F5579'],['#555B3F','#3B402B'],['#313C33','#1E2620']];
+const fmt=n=>n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'M':Math.round(n/1e3)+'K';
+let idx=0,shelf=[],past=[],liked=null;
+
+function coverHtml(b,i){
+  const [c1,c2]=COVER_TINTS[i%COVER_TINTS.length];
+  return `<div class="cover-fallback" style="background:linear-gradient(160deg,${c1},${c2})"><div class="t">${esc(b.title)}</div><div class="a">${esc(b.author)}</div></div><img src="${esc(b.img)}" alt="" onerror="this.remove()" draggable="false">`;
+}
+function render(dir){
+  const b=BOOKS[idx%BOOKS.length],feed=$('#feed');
+  const vibes=b.tags.filter(t=>t!=='Series'&&t!=='Standalone');
+  const kick=[b.genre==='Science Fiction'?'Sci-Fi':b.genre,vibes[0]].filter(Boolean).join(' · ');
+  let h=`<section class="p-head">
+    <div class="kicker">${ic('sparkle-fill')} Picked for you · ${esc(kick)}</div>
+    <h1>${esc(b.title)}</h1><div class="by">${esc(b.author)}</div>
+    <div class="facts">
+      <span class="fact star">${ic('star-fill')} ${b.rating} <span style="color:var(--muted);font-weight:600">(${fmt(b.reviewsRaw)})</span></span>
+      <span class="fact">${ic('book-open')} ${b.pages} pages</span>
+      <span class="fact">${ic('clock')} ${b.year}</span>
+      ${b.spice?`<span class="fact spice" aria-label="Spice ${b.spice} of 5">${ic('pepper-fill').repeat(b.spice)}</span>`:''}
+    </div>
+    <button class="more" id="moreBtn" aria-label="More options" aria-expanded="false">${ic('dots-three')}</button>
+    <div class="menu" id="menu"><button data-act="read">${ic('check-circle')} I've already read it</button><button data-act="skip">${ic('clock')} Ask me later</button></div>
+  </section>
+  <figure class="m cover-card" id="coverCard">
+    <div class="cover-bg" style="background-image:url('${esc(b.img)}')"></div><div class="cover-tint"></div>
+    <div class="cover-book">${coverHtml(b,idx)}</div>
+    <span class="cover-hint">Double-tap to like</span>
+    <span class="burst" id="burst">${ic('heart-fill')}</span>
+    <button class="like" data-like="cover" aria-label="Like the cover">${ic('heart')}</button>
+  </figure>`;
+  if(b.plot)h+=`<div class="m prompt"><div class="m-lbl">${ic('sparkle')} Poorly explained plot</div><p class="big">${esc(b.plot)}</p><button class="like" data-like="plot" aria-label="Like the plot">${ic('heart')}</button></div>`;
+  if(vibes.length)h+=`<div class="m vibes"><div class="m-lbl">${ic('books')} The vibe</div><div class="vibe-row">${vibes.map((v,i)=>`<button class="vibe v${i%4}" aria-pressed="false" data-vibe="${esc(v)}">${ic('heart-fill')}${esc(v)}</button>`).join('')}</div><div class="vibe-tip">Tap the vibes you're into, then heart the card.</div><button class="like" data-like="vibes" aria-label="Like the vibe">${ic('heart')}</button></div>`;
+  if(b.quote||b.opening)h+=`<div class="m prompt rose quote"><div class="m-lbl">${ic('quotes')} ${b.opening?'Iconic opening line':'A line that lives rent-free'}</div><span class="qmark" aria-hidden="true">“</span><p class="big">${esc(b.opening||b.quote)}</p><button class="like" data-like="quote" aria-label="Like the quote">${ic('heart')}</button></div>`;
+  if(b.review1){const who=(b.review1.source.match(/@\w+/)||['a reader'])[0];
+    h+=`<div class="m review"><div class="m-lbl">${ic('chat-circle')} A reader says</div><div class="bubble">“${esc(b.review1.text)}”</div><div class="who"><span class="dot">${ic('feather')}</span>${esc(who)}<span class="sample">SAMPLE</span></div><button class="like" data-like="review" aria-label="Like this review">${ic('heart')}</button></div>`;}
+  if(b.aboutAuthor)h+=`<div class="m author"><div class="av" aria-hidden="true">${esc(b.author[0])}</div><div><h3>${esc(b.author)}</h3><p id="bio">${esc(b.aboutAuthor)}</p><button class="rm" id="bioMore">Read more</button></div></div>`;
+  h+=`<div class="feed-end">That's ${esc(b.title)} in a nutshell ✨</div>`;
+  feed.innerHTML=h;feed.scrollTop=0;
+  feed.classList.remove('out-left','in-right','in-left');void feed.offsetWidth;
+  if(dir)feed.classList.add(dir>0?'in-right':'in-left');
+  $('#undoBtn').disabled=!past.length;
+  wireCard(b);
+}
+function wireCard(b){
+  // double-tap cover (works with mouse dblclick and touch)
+  let last=0;
+  $('#coverCard').addEventListener('pointerup',e=>{if(e.target.closest('.like'))return;const t=Date.now();if(t-last<320){burst();openLike('cover');last=0;}else last=t;});
+  $('#moreBtn').onclick=e=>{const m=$('#menu');const s=!m.classList.contains('show');m.classList.toggle('show',s);e.currentTarget.setAttribute('aria-expanded',s);};
+  $('#menu').onclick=e=>{const a=e.target.closest('[data-act]');if(!a)return;toast(a.dataset.act==='read'?'Marked as read. Nice!':"We'll bring it back later");next('skip');};
+  const bm=$('#bioMore');if(bm)bm.onclick=()=>{$('#bio').classList.toggle('open');bm.textContent=$('#bio').classList.contains('open')?'Show less':'Read more';};
+}
+function burst(){const el=$('#burst');el.classList.remove('go');void el.offsetWidth;el.classList.add('go');}
+
+const LIKE_COPY={cover:['the cover','Judging a book by its cover? We approve.'],plot:['the plot',null],vibes:['the vibe',null],quote:['this line',null],review:['what a reader said',null]};
+function openLike(kind){
+  const b=BOOKS[idx%BOOKS.length];liked=kind;
+  let body=LIKE_COPY[kind][1];
+  if(kind==='plot')body=b.plot;
+  if(kind==='quote')body=b.opening||b.quote;
+  if(kind==='review')body=b.review1.text;
+  if(kind==='vibes'){const sel=[...document.querySelectorAll('.vibe[aria-pressed="true"]')].map(x=>x.dataset.vibe);body=(sel.length?sel:b.tags.filter(t=>t!=='Series'&&t!=='Standalone').slice(0,3)).join(' · ');}
+  $('#sheetSub').textContent=`${b.title} by ${b.author}`;
+  $('#lpT').textContent=`You liked ${LIKE_COPY[kind][0]}`;
+  $('#lpB').textContent=body;
+  $('#note').value='';
+  $('#scrim').classList.add('show');$('#sheet').classList.add('show');
+  setTimeout(()=>$('#confirmBtn').focus(),60);
+}
+function closeLike(){$('#scrim').classList.remove('show');$('#sheet').classList.remove('show');}
+function confirmLike(){
+  const b=BOOKS[idx%BOOKS.length];
+  shelf.push({id:b.id,liked,note:$('#note').value});
+  closeLike();
+  $('#shelfN').textContent=shelf.length;$('#shelfBtn').setAttribute('aria-label',`Your shelf, ${shelf.length} books`);
+  const sb=$('#shelfBtn');sb.classList.remove('bump');void sb.offsetWidth;sb.classList.add('bump');
+  $('#momentCover').innerHTML=coverHtml(b,idx);
+  $('#momentP').textContent=`You and ${b.title} are going to get along.`;
+  $('#momentWhy').textContent=`Because you loved ${LIKE_COPY[liked][0]} ♡`;
+  confetti();
+  $('#moment').classList.add('show');setTimeout(()=>$('#momentBtn').focus(),60);
+}
+function confetti(){
+  const m=$('#moment');m.querySelectorAll('.confetti').forEach(c=>c.remove());
+  const cols=['#c7a9b5','#7F9D98','#5C7EA0','#E9B9C8','#C98A1B','#555B3F'];
+  for(let i=0;i<26;i++){const c=document.createElement('span');c.className='confetti';
+    c.style.cssText=`left:${Math.random()*100}%;background:${cols[i%cols.length]};--dy:${520+Math.random()*320}px;--dx:${(Math.random()-.5)*120}px;--rot:${(Math.random()-.5)*720}deg;animation-delay:${Math.random()*.25}s;${i%3===0?'border-radius:50%;width:10px;height:10px;':''}`;
+    m.appendChild(c);}
+}
+function next(kind){
+  past.push({idx,kind});
+  const feed=$('#feed');feed.classList.remove('in-right','in-left');void feed.offsetWidth;feed.classList.add('out-left');
+  setTimeout(()=>{idx++;render(1);},matchMedia('(prefers-reduced-motion: reduce)').matches?0:260);
+}
+function undo(){
+  const h=past.pop();if(!h)return;
+  if(h.kind==='like'){shelf.pop();$('#shelfN').textContent=shelf.length;}
+  idx=h.idx;render(-1);toast('Brought it back');
+}
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200);}
+
+document.addEventListener('click',e=>{
+  const like=e.target.closest('.like');if(like){if(like.dataset.like==='cover')burst();openLike(like.dataset.like);return;}
+  const v=e.target.closest('.vibe');if(v){v.setAttribute('aria-pressed',String(v.getAttribute('aria-pressed')!=='true'));return;}
+  if(!e.target.closest('#menu')&&!e.target.closest('#moreBtn')){const m=$('#menu');if(m)m.classList.remove('show');}
+});
+$('#passBtn').onclick=()=>next('pass');
+$('#undoBtn').onclick=undo;
+$('#confirmBtn').onclick=confirmLike;
+$('#cancelBtn').onclick=closeLike;$('#scrim').onclick=closeLike;
+$('#momentBtn').onclick=()=>{$('#moment').classList.remove('show');past.push({idx,kind:'like'});idx++;render(1);};
+$('#shelfBtn').onclick=()=>toast(shelf.length?`${shelf.length} book${shelf.length>1?'s':''} on your shelf`:'Your shelf is empty, for now');
+$('#coachOk').onclick=()=>$('#coach').remove();
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLike();$('#moment').classList.remove('show');}});
+render(0);
+</script>
+</body>
+</html>
