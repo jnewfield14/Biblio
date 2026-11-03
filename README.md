@@ -1,3 +1,5 @@
 # Biblio
 Stories are a core part of being human. They inspire us, entertain us, teach us new things, and connect us as people. But it’s not always easy to find the next read, or connect with readers with similar interests. Biblio is designed to make it easier to find connections through books. 
 This is a personal design exploration into swipe-based book discovery. The core idea: instead of browsing a catalog or scrolling reviews, you set your preferences (formats, genres, tropes) once, then swipe through book "profiles" — swipe right to match and add to your list, swipe left to pass. Matches land in a shelf you can revisit later. Built as a single self-contained HTML/CSS/JS file. Book data (title, author, ratings, tropes) is real, pulled from Open Library and Goodreads-hosted cover art.
+
+**Prototype v2 (in progress):** adds sign-up with an 18+ gate, a full book details page (half-star ratings, reading statuses), My Books lists, reading goals, spoiler settings, undo, and persistence. See [`docs/PRODUCTION_PLAN.md`](docs/PRODUCTION_PLAN.md) for the review of the prototype and the plan for a native iOS/Android build.
