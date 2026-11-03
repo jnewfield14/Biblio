@@ -472,7 +472,7 @@ input,select{font-family:inherit;}
     <p>Tell us what you love, then meet books like you'd meet people. Heart the ones that catch your eye.</p>
   </div>
   <div class="stack">
-    <button class="btn btn-block btn-primary" data-action="get-started">Get started</button>
+    <button class="btn btn-block btn-primary" data-action="open-signup" data-mode="start">Create account</button>
     <button class="btn btn-block btn-white" data-action="go-login">Log in</button>
   </div>
 </main>
@@ -1115,6 +1115,8 @@ function showQuizStep(idx,dir){
   const last=idx===order.length-1;
   $('#nextBtn').innerHTML=last?(quizMode==='onboard'?`${ic('sparkle-fill')} Find my books`:'Save preferences'):'Continue';
   $('#backBtn').setAttribute('aria-label',idx===0?'Leave profile setup':'Previous step');
+  // During sign-up onboarding there's nowhere to go "back" to from step 1
+  $('#backBtn').style.visibility=idx===0&&quizMode==='onboard'?'hidden':'visible';
 }
 function quizNext(){quizStep<quizOrder().length-1?showQuizStep(quizStep+1,1):finishQuiz();}
 function quizBack(){quizStep>0?showQuizStep(quizStep-1,-1):goTo(quizReturn==='s-quiz'?'s-welcome':quizReturn);}
@@ -1365,9 +1367,10 @@ function openSignup(mode){
   signupMode=mode;if(mode==='soft')softPrompted=true;
   const n=shelfIds('want').length;
   $('#suMascot').innerHTML=mascot();
-  $('#suT').textContent=mode==='manual'?'Create your account':'Save your shelf';
-  $('#suSub').textContent=n?`You've got ${n} book${n===1?'':'s'} on your shelf. Create a free account so your shelf, ratings and goals are saved.`:'Create a free account so your shelf, ratings and reading goals are saved.';
-  $('#suLater').setAttribute('aria-label',mode==='soft'?'Maybe later':'Close');
+  $('#suT').textContent=mode==='soft'||mode==='hard'?'Save your shelf':'Create your account';
+  $('#suSub').textContent=mode==='start'?"First the basics, then we'll get to know your taste in books."
+    :n?`You've got ${n} book${n===1?'':'s'} on your shelf. Create a free account so your shelf, ratings and goals are saved.`:'Create a free account so your shelf, ratings and reading goals are saved.';
+  $('#suLater').setAttribute('aria-label',mode==='soft'?'Maybe later':mode==='start'?'Back':'Close');
   ['suHandle','suEmail','suPass','suDob'].forEach(id=>setErr(id,false));$('#suTermsErr').classList.remove('show');
   openSheet('sheet-signup');track('signup_prompt_shown',{mode,swipes:S.swipes,matches:n});
 }
@@ -1384,8 +1387,10 @@ $('#signupForm').addEventListener('submit',e=>{
   S.account={handle,email,createdAt:Date.now(),color:AVATAR_COLORS[0],ageVerified:true};S.session=true;save();
   track('signup_completed',{mode:signupMode,swipes:S.swipes,matches:shelfIds('want').length});
   $('#suPass').value='';$('#suDob').value='';
-  closeSheet();toast(`Welcome, ${handle}! Your shelf is saved.`);
-  goTo('s-swipe');
+  if(signupMode==='start'){
+    // New account flow: sign up → reader-profile quiz → Discover
+    closeSheet(true);startQuiz('onboard');toast(`Welcome, ${handle}! Let's find your kind of books.`);
+  }else{closeSheet();toast(`Welcome, ${handle}! Your shelf is saved.`);goTo('s-swipe');}
 });
 
 /* Book details */
@@ -1566,7 +1571,10 @@ $('#app').addEventListener('scroll',e=>{e.currentTarget.scrollTop=0;e.currentTar
 hydrateIcons();renderNavs();
 S.sessions++;save();track('session_start',{n:S.sessions,signed_in:!!(S.account&&S.session)});
 buildDeck(0);
-goTo((S.account&&S.session)||(S.onboarded&&!S.account)?'s-swipe':'s-welcome');
+// Flow: Welcome → (Create account → quiz) or (Log in) → Discover.
+// GATE_SOFT/GATE_HARD only apply to guests, which this flow no longer creates.
+if(S.account&&S.session){if(S.onboarded)goTo('s-swipe');else startQuiz('onboard');}
+else goTo('s-welcome');
 </script>
 </body>
 </html>

@@ -87,6 +87,11 @@ The prototype (`index.html`) is still one self-contained file, so it stays easy 
   In production, compute the tint and a blurhash once at ingest time and store them on `books`. Serve covers from your own CDN at 1×/2×/3× widths.
 - **Home:** Stories-style genre rings, "Your shelf", Trending (ranked), and Top in [genre] rows.
 - **Navigation:** signed-in readers land on **Discover**, not Home.
+- **Account flow (product decision, replaces the "swipe before sign-up" idea above):** Welcome → **Create account** or **Log in**.
+  - New readers sign up first (handle, email, password, 18+ date of birth). Then they take the reader-profile quiz, then land on Discover.
+  - Returning readers who log in go straight to Discover.
+  - The guest gate (`GATE_SOFT`/`GATE_HARD`) is dormant, because the app no longer creates guests.
+  - Watch the Welcome → sign-up drop-off in analytics. If it's high, the guest preview is a feature-flag away.
 
 ---
 
